@@ -1,0 +1,40 @@
+
+missile.png
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+body
+  rotate: false
+  xy: 2, 32
+  size: 94, 30
+  orig: 94, 30
+  offset: 0, 0
+  index: -1
+effect-missile
+  rotate: false
+  xy: 162, 2
+  size: 28, 14
+  orig: 28, 14
+  offset: 0, 0
+  index: -1
+smoke-1
+  rotate: false
+  xy: 2, 2
+  size: 30, 28
+  orig: 30, 28
+  offset: 0, 0
+  index: -1
+smoke-2
+  rotate: false
+  xy: 162, 18
+  size: 45, 44
+  orig: 45, 44
+  offset: 0, 0
+  index: -1
+smoke-3
+  rotate: false
+  xy: 98, 4
+  size: 62, 58
+  orig: 62, 58
+  offset: 0, 0
+  index: -1
