@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="left-down" width="50" height="7" tilewidth="64" tileheight="64" nextobjectid="157">
+ <tileset firstgid="1" name="background" tilewidth="64" tileheight="64" tilecount="84" columns="12">
+  <image source="background.png" width="800" height="480"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="50" height="7">
+  <data encoding="base64" compression="zlib">
+   eJxjZBgFo2AUjIJRQE8AAArwAAI=
+  </data>
+ </layer>
+ <objectgroup name="floor">
+  <object id="134" x="14.0606" y="287.273" width="956" height="28"/>
+  <object id="135" x="991.394" y="212.212" width="496" height="25"/>
+  <object id="136" x="1612.73" y="284.242" width="678.182" height="20"/>
+  <object id="137" x="2080" y="360" width="1116" height="24"/>
+  <object id="139" x="1923.15" y="217.212" width="124" height="8"/>
+  <object id="140" x="2635.64" y="281.333" width="120" height="24"/>
+  <object id="147" x="1227.27" y="409.091" width="121.212" height="21.2121"/>
+  <object id="152" x="790" y="383" width="353" height="14"/>
+ </objectgroup>
+ <objectgroup name="ladder"/>
+ <objectgroup name="ladder2">
+  <object id="138" x="1488" y="215" width="133" height="75"/>
+ </objectgroup>
+ <objectgroup name="minifort"/>
+ <objectgroup name="bigfort"/>
+ <objectgroup name="stand_man">
+  <object id="148" x="1248.48" y="333.333" width="69.697" height="63.6364"/>
+ </objectgroup>
+ <objectgroup name="hide_man">
+  <object id="141" x="742.424" y="209.091" width="84.8485" height="75.7576"/>
+  <object id="142" x="1387.88" y="121.212" width="78.7879" height="87.8788"/>
+  <object id="143" x="1957.58" y="142.424" width="75.7576" height="66.6667"/>
+  <object id="144" x="2230.3" y="227.273" width="57.5758" height="54.5455"/>
+  <object id="145" x="2642.42" y="224.242" width="81.8182" height="54.5455"/>
+ </objectgroup>
+ <objectgroup name="moveEnemy">
+  <object id="146" x="1003.03" y="118.182" width="187.879" height="69.697"/>
+  <object id="149" x="2772.73" y="278.788" width="269.697" height="72.7273"/>
+  <object id="150" x="1733.33" y="203.03" width="212.121" height="66.6667"/>
+ </objectgroup>
+ <objectgroup name="bridge_head"/>
+ <objectgroup name="bridge_body"/>
+ <objectgroup name="bridge_tail"/>
+ <objectgroup name="rewardM"/>
+ <objectgroup name="rewardF">
+  <object id="151" x="942" y="335" width="59" height="41"/>
+ </objectgroup>
+ <objectgroup name="rewardS"/>
+ <objectgroup name="rewardFlyS"/>
+ <objectgroup name="rewardFlyF"/>
+ <objectgroup name="item_plane"/>
+ <objectgroup name="item_tank"/>
+ <objectgroup name="item_health">
+  <object id="153" x="2176" y="320" width="60" height="30"/>
+ </objectgroup>
+</map>
