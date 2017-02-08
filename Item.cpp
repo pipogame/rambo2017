@@ -20,11 +20,11 @@ void Item::initPhysic(b2World * world, Point pos, b2BodyType type)
 
 	fixtureDef.density = 0.5f;
 	fixtureDef.friction = 1.0f;
-	fixtureDef.restitution = 0.0f;
+	fixtureDef.restitution = 0.3f;
 	fixtureDef.shape = &shape;
 
 	fixtureDef.filter.categoryBits = BITMASK_ITEM;
-	fixtureDef.filter.maskBits = BITMASK_SOLDIER | BITMASK_FLOOR;
+	fixtureDef.filter.maskBits = BITMASK_SOLDIER | BITMASK_FLOOR | BITMASK_BLINK;
 
 	bodyDef.type = type;
 	bodyDef.userData = this;		// pass sprite to bodyDef with argument: userData

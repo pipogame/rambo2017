@@ -29,7 +29,6 @@ void DynamicHumanEnemy::move()
 
 void DynamicHumanEnemy::die()
 {
-	Enemy::die();
 	this->setAnimation(0,"die",false);
 }
 
