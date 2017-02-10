@@ -50,6 +50,10 @@ void HelicopterSoldier::die(Point posOfCammera)
 	}
 }
 
+void HelicopterSoldier::idle()
+{
+}
+
 void HelicopterSoldier::idleShoot()
 {
 	clearTracks();

@@ -10,26 +10,29 @@ TankEnemy::TankEnemy(string jsonFile, string atlasFile, float scale) : StaticHum
 TankEnemy * TankEnemy::create(float scale, TankType type)
 {
 	TankEnemy *e = new TankEnemy("tank/tank.json", "tank/tank.atlas", scale);
-	e->setTag(TAG_ENEMY_TANK);
+	
 	e->type = type;
 	switch (type) {
 	case TankType::STUPID:
 	{
+		e->setTag(TAG_ENEMY_TANK_STUPID);
 		e->move_vel = e->SCREEN_SIZE.width / PTM_RATIO / 4.0f;
 		e->setAnimation(0, "moving", false);
 		break;
 	}
 	case TankType::NORMAL:
 	{
+		e->setTag(TAG_ENEMY_TANK);
 		e->move_vel = e->SCREEN_SIZE.width / PTM_RATIO / 4.0f;
-		e->setAnimation(0, "runing-shoot", false);
+		e->setAnimation(0, "running-shoot", false);
 		break;
 	}
 
 	case TankType::SMART:
 	{
+		e->setTag(TAG_ENEMY_TANK);
 		e->move_vel = e->SCREEN_SIZE.width / 5 / PTM_RATIO;;
-		e->setAnimation(0, "runing-shoot", false);
+		e->setAnimation(0, "running-shoot", false);
 		break;
 	}
 	}
@@ -40,8 +43,6 @@ TankEnemy * TankEnemy::create(float scale, TankType type)
 	//e->move_vel = e->SCREEN_SIZE.width / PTM_RATIO / 4.0f;
 	e->setScaleX(-1);
 	e->facingRight = false;
-	//e->setTag(TAG_ENEMY);
-	//e->setVisible(0);
 	e->indexBullet = -1;
 	return e;
 	
@@ -247,7 +248,7 @@ bool TankEnemy::checkOutScreen(Point posCamera)
 	log("End\n");*/
 
 	if ((this->getPosition().y < 0)) {
-		log("This fucking bug!");
+		//log("This fucking bug!");
 	}
 
 	if ((fabs((this->getPosition().x + this->getParent()->getPosition().x) - posCamera.x) > screenSize.width*2/3 ) || (this->getPosition().y < 0)) {

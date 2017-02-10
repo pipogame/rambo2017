@@ -1,4 +1,6 @@
 #include "Soldier.h"
+#include "SimpleAudioEngine.h"
+#include "Global.h"
 
 
 Soldier::Soldier(string jsonFile, string atlasFile, float scale) : B2Skeleton(jsonFile, atlasFile, scale)
@@ -16,7 +18,7 @@ Soldier * Soldier::create(string jsonFile, string atlasFile, float scale)
 	soldier->health = 5;
 	soldier->jump_vel = soldier->SCREEN_SIZE.height * (4.0f / 3.0f) / PTM_RATIO;
 	soldier->move_vel = soldier->SCREEN_SIZE.width / PTM_RATIO / 4.0f;
-	soldier->pre_state = IDLE_SHOOT;
+	soldier->pre_state = IDLE;
 	soldier->cur_state = JUMPING;
 	soldier->facingRight = true;
 	soldier->canShoot = 1;
@@ -45,6 +47,9 @@ void Soldier::updateHero(float dt)
 	{
 	case JUMPING:
 		jumping();
+		break;
+	case IDLE:
+		idle();
 		break;
 	case IDLE_SHOOT:
 		idleShoot();
@@ -123,6 +128,7 @@ void Soldier::move()
 
 void Soldier::moveFollow(Point joystickVel)
 {
+
 	if (getPositionY() + sizeSoldier.height > SCREEN_SIZE.height && isGetOriginX) {
 		if (joystickVel.x < 0 && joystickVel.y > 0)
 			body->SetLinearVelocity(b2Vec2(0, 0));
@@ -130,6 +136,16 @@ void Soldier::moveFollow(Point joystickVel)
 			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
 		}
 		else if (joystickVel.y > 0) {
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+		}
+	}
+	else if (getPositionY() < SCREEN_SIZE.height / 5 && isGetOriginX) {
+		if (joystickVel.x < 0 && joystickVel.y < 0)
+			body->SetLinearVelocity(b2Vec2(0, 0));
+		else if (joystickVel.x < 0) {
+			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
+		}
+		else if (joystickVel.y < 0) {
 			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
 		}
 	}
@@ -144,16 +160,20 @@ void Soldier::moveFollow(Point joystickVel)
 			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
 		else
 			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
-
 	}
-	else
+	else if (getPositionY() < SCREEN_SIZE.height / 5) {
+		if (joystickVel.y < 0)
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+		else
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
+	} else
 		body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
 }
 
 void Soldier::blinkTrans()
 {
-	auto blink = CCBlink::create(1, 3);
-	auto sequence = Sequence::create(blink, blink, blink, nullptr);
+	auto blink = CCBlink::create(1, 2);
+	auto sequence = Sequence::create(blink, blink, nullptr);
 	this->runAction(sequence);
 }
 
@@ -165,7 +185,7 @@ void Soldier::die(Point posOfCammera)
 		cur_state = JUMPING;
 		onGround = false;
 		body->SetLinearVelocity(b2Vec2(0, 0));
-		body->SetTransform(b2Vec2((posOfCammera.x - SCREEN_SIZE.width * 0.35f) / PTM_RATIO,
+		body->SetTransform(b2Vec2((posOfCammera.x) / PTM_RATIO,
 			SCREEN_SIZE.height / PTM_RATIO), this->body->GetAngle());
 
 
@@ -187,7 +207,7 @@ void Soldier::listener()
 {
 	this->setCompleteListener([&](int trackIndex, int loopCount) {
 		if (strcmp(getCurrent()->animation->name, "jumping") == 0 && loopCount == 6) {
-			cur_state = IDLE_SHOOT;
+			cur_state = IDLE;
 		}
 	});
 }
@@ -205,6 +225,19 @@ void Soldier::initPhysic(b2World * world, Point pos)
 	body = world->CreateBody(&bodyDef);
 	GB2ShapeCache::sharedGB2ShapeCache()->addFixturesToBody(body, "soldier");
 
+}
+
+void Soldier::idle() {
+	if (pre_state != cur_state) {
+		if (pre_state == LYING_SHOOT) {
+			body->SetTransform(body->GetPosition(), 0);
+		}
+
+		clearTracks();
+		addAnimation(0, "idle", true);
+		setToSetupPose();
+		pre_state = IDLE;
+	}
 }
 
 void Soldier::idleShoot()
@@ -312,7 +345,7 @@ void Soldier::createPool()
 	bulletPool = CCArray::createWithCapacity(MAX_BULLET_HERO_POOL);
 	bulletPool->retain();
 	for (int i = 0; i < MAX_BULLET_HERO_POOL; i++) {
-		auto bullet = BulletOfHero::create(this->getScale());
+		auto bullet = BulletOfHero::create();
 		bullet->body = nullptr;
 		bulletPool->addObject(bullet);
 	}
@@ -331,11 +364,17 @@ void Soldier::shoot(float radian)
 		if (!canShoot) {
 			switch (bulletType)
 			{
-			case BulletType::Circle:
-			case BulletType::Slow: {
-
-
+			case BulletType::Circle:{
 				if (!canShoot && bulletPool != nullptr) {
+					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_CIRCLE);
+					createBullet(radian, getGunLocation());
+					
+				}
+				break;
+			}
+			case BulletType::Slow: {
+				if (!canShoot && bulletPool != nullptr) {
+					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_NORMAL);
 					createBullet(radian, getGunLocation());
 
 				}
@@ -345,6 +384,8 @@ void Soldier::shoot(float radian)
 
 				if (!(canShoot % 10) && bulletPool != nullptr) {
 					createBullet(radian, getGunLocation());
+					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_NORMAL);
+					//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_BULLET_NORMAL);
 
 				}
 
@@ -352,13 +393,14 @@ void Soldier::shoot(float radian)
 			}
 
 			case BulletType::Super: {
-				
+
 				if (!canShoot && bulletPool != nullptr) {
 					createBullet(radian, getGunLocation());
 					createBullet(radian - PI / 10, getGunLocation());
 					createBullet(radian + PI / 10, getGunLocation());
 					createBullet(radian - PI / 5, getGunLocation());
 					createBullet(radian + PI / 5, getGunLocation());
+					//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_BULLET_SUPER);
 
 				}
 
@@ -400,7 +442,7 @@ void Soldier::createBullet(float radian, Point posGun)
 	}
 	if (this->bulletType == BulletType::Circle) {
 		bullet->type = Type::circle;
-		bullet->alpha = 3 * PI / 2;
+		bullet->alpha = 3*PI/2;
 		bullet->radian = radian;
 	}
 	else {
