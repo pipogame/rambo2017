@@ -25,12 +25,15 @@ public:
 	Sprite *life_4;
 	Sprite *life_5;
 
+	Sprite *shield;
+	Label* defense;
+
 	//Button *btnLeft;
 	//Button *btnRight;
 
-	void addJoystick(Point pos);
-	void addJoystickButtonJump(Point pos);
-	void addJoystickButtonFire(Point pos);
+	void addJoystick(float px, float py);
+	void addJoystickButtonJump(float px, float py);
+	void addJoystickButtonFire(float px, float py);
 
 	//void addButton();
 

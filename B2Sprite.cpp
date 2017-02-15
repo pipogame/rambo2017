@@ -1,4 +1,5 @@
 #include "B2Sprite.h"
+#include "AudioEngine.h"
 
 B2Sprite::B2Sprite()
 {
@@ -16,6 +17,7 @@ B2Sprite * B2Sprite::create()
 
 void B2Sprite::initPhysic(b2World *world, Point pos, b2BodyType type)
 {
+	//boom = nullptr;
 	//------
 	b2BodyDef bodyDef;	// defination of body like: shape,...// first
 	b2PolygonShape shape;
@@ -47,32 +49,51 @@ void B2Sprite::update(float dt)
 
 void B2Sprite::explosion()
 {
-	boom = Sprite::createWithSpriteFrameName("explosion-1.png");
-	//boom->setPosition(0, this->getBoundingBox().size.height / 2);
-	boom->setPosition(this->getPosition());
-	this->getParent()->addChild(boom, 100);
-	Vector<SpriteFrame*> animFrames;
-	animFrames.reserve(7);
+	// phai kiem tra boom = null moi tao vu no 
+	//vi co the dan va cham cung luc voi hai body 
+	//va tao hai vu no nhung chi giai phong duoc 1
 
-	for (int i = 2; i < 8; i++)
-	{
-		auto frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(StringUtils::format("explosion-%d.png", i));
-		animFrames.pushBack(frame);
+	if (!boom) {
+		/*auto ref = UserDefault::getInstance()->sharedUserDefault();
+		bool checkSound = ref->getBoolForKey(KEYSOUND);
+		if (checkSound) {
+			experimental::AudioEngine::play2d(SOUND_ENEMY_BOMB_EXPLOSION);
+		}*/
+		AudioManager::playSound(SOUND_ENEMY_BOMB_EXPLOSION);  
+
+		boom = Sprite::createWithSpriteFrameName("explosion-1.png");
+		boom->setScale(SCREEN_SIZE.height / 6.0f / boom->getContentSize().height);
+		//boom->setPosition(0, this->getBoundingBox().size.height / 2);
+		//log("Boom-----------------------");
+		boom->setPosition(this->getPosition());
+		this->getParent()->addChild(boom, 100);
+		Vector<SpriteFrame*> animFrames;
+		animFrames.reserve(7);
+
+		for (int i = 2; i < 8; i++)
+		{
+			auto frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(StringUtils::format("explosion-%d.png", i));
+			animFrames.pushBack(frame);
+		}
+
+		auto animation = Animation::createWithSpriteFrames(animFrames, 0.075f);
+		auto animate = Animate::create(animation);
+		animate->retain();
+		boom->runAction(animate);
+
+		auto callFunc2 = CallFunc::create([&]() {
+			if (boom != nullptr) {
+				boom->removeFromParentAndCleanup(true);
+				//boom->release();
+				boom = nullptr;
+				//log("destroy Boom-----------------------");
+			}
+		});
+		//this->runAction(Sequence::create(DelayTime::create(0.5f), callFunc2, nullptr));
+		boom->runAction(Sequence::create(animate, callFunc2, nullptr));
 	}
 
-	auto animation = Animation::createWithSpriteFrames(animFrames, 0.075f);
-	auto animate = Animate::create(animation);
-	animate->retain();
-	boom->runAction(animate);
 
-	auto callFunc2 = CallFunc::create([&]() {
-		if (boom != nullptr) {
-			boom->removeFromParentAndCleanup(true);
-			boom = nullptr;
-		}
-	});
-
-	this->runAction(Sequence::create(DelayTime::create(0.5f), callFunc2, nullptr));
 }
 
 

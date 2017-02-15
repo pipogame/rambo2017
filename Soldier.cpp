@@ -1,5 +1,5 @@
 #include "Soldier.h"
-#include "SimpleAudioEngine.h"
+#include "AudioEngine.h"
 #include "Global.h"
 
 
@@ -24,7 +24,7 @@ Soldier * Soldier::create(string jsonFile, string atlasFile, float scale)
 	soldier->canShoot = 1;
 	soldier->angle = 0;
 	soldier->bulletType = BulletType::Slow;
-	soldier->isNoDie = -180;
+	soldier->isNoDie = 0;
 	return soldier;
 }
 
@@ -128,46 +128,46 @@ void Soldier::move()
 
 void Soldier::moveFollow(Point joystickVel)
 {
-
+	auto vel = move_vel * 1.1f;
 	if (getPositionY() + sizeSoldier.height > SCREEN_SIZE.height && isGetOriginX) {
 		if (joystickVel.x < 0 && joystickVel.y > 0)
 			body->SetLinearVelocity(b2Vec2(0, 0));
 		else if (joystickVel.x < 0) {
-			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * vel));
 		}
 		else if (joystickVel.y > 0) {
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, 0));
 		}
 	}
 	else if (getPositionY() < SCREEN_SIZE.height / 5 && isGetOriginX) {
 		if (joystickVel.x < 0 && joystickVel.y < 0)
 			body->SetLinearVelocity(b2Vec2(0, 0));
 		else if (joystickVel.x < 0) {
-			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * vel));
 		}
 		else if (joystickVel.y < 0) {
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, 0));
 		}
 	}
 	else if (getPositionY() + sizeSoldier.height > SCREEN_SIZE.height) {
 		if (joystickVel.y > 0)
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, 0));
 		else
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, joystickVel.y * vel));
 	}
 	else if (isGetOriginX) {
 		if (joystickVel.x < 0)
-			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(0, joystickVel.y * vel));
 		else
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, joystickVel.y * vel));
 	}
 	else if (getPositionY() < SCREEN_SIZE.height / 5) {
 		if (joystickVel.y < 0)
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, 0));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, 0));
 		else
-			body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
+			body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, joystickVel.y * vel));
 	} else
-		body->SetLinearVelocity(b2Vec2(joystickVel.x * move_vel, joystickVel.y * move_vel));
+		body->SetLinearVelocity(b2Vec2(joystickVel.x * vel, joystickVel.y * vel));
 }
 
 void Soldier::blinkTrans()
@@ -206,8 +206,12 @@ void Soldier::die(Point posOfCammera)
 void Soldier::listener()
 {
 	this->setCompleteListener([&](int trackIndex, int loopCount) {
-		if (strcmp(getCurrent()->animation->name, "jumping") == 0 && loopCount == 6) {
-			cur_state = IDLE;
+		if (strcmp(getCurrent()->animation->name, "jumping") == 0) {
+			this->setTimeScale(1.3f);
+			if (loopCount == 5) {
+				this->setTimeScale(1.5f);
+				cur_state = IDLE;
+			}
 		}
 	});
 }
@@ -347,6 +351,7 @@ void Soldier::createPool()
 	for (int i = 0; i < MAX_BULLET_HERO_POOL; i++) {
 		auto bullet = BulletOfHero::create();
 		bullet->body = nullptr;
+		bullet->boom = nullptr;
 		bulletPool->addObject(bullet);
 	}
 
@@ -366,15 +371,36 @@ void Soldier::shoot(float radian)
 			{
 			case BulletType::Circle:{
 				if (!canShoot && bulletPool != nullptr) {
-					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_CIRCLE);
+					//srand(time(NULL));
+					AudioManager::playSound(SOUND_BULLET_CIRCLE);
 					createBullet(radian, getGunLocation());
+					int randBullet = indexBullet % 5;
+					switch (randBullet)
+					{
+					case 0:
+						createBullet(radian+PI/15, getGunLocation());
+						break;
+					case 1:
+						createBullet(radian + PI / 15, getGunLocation());
+						break;
+					case 2:
+						createBullet(radian - PI / 15, getGunLocation());
+						break;
+					case 3:
+						createBullet(radian - PI / 15, getGunLocation());
+						break;
+					case 4:
+						createBullet(radian + PI / 15, getGunLocation());
+						break;
+					
+					}
 					
 				}
 				break;
 			}
 			case BulletType::Slow: {
 				if (!canShoot && bulletPool != nullptr) {
-					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_NORMAL);
+					AudioManager::playSound(SOUND_BULLET_NORMAL);
 					createBullet(radian, getGunLocation());
 
 				}
@@ -384,8 +410,7 @@ void Soldier::shoot(float radian)
 
 				if (!(canShoot % 10) && bulletPool != nullptr) {
 					createBullet(radian, getGunLocation());
-					//CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect(SOUND_BULLET_NORMAL);
-					//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_BULLET_NORMAL);
+					AudioManager::playSound(SOUND_BULLET_NORMAL);
 
 				}
 
@@ -396,11 +421,11 @@ void Soldier::shoot(float radian)
 
 				if (!canShoot && bulletPool != nullptr) {
 					createBullet(radian, getGunLocation());
-					createBullet(radian - PI / 10, getGunLocation());
-					createBullet(radian + PI / 10, getGunLocation());
-					createBullet(radian - PI / 5, getGunLocation());
-					createBullet(radian + PI / 5, getGunLocation());
-					//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_BULLET_SUPER);
+					createBullet(radian - PI / 15, getGunLocation());
+					createBullet(radian + PI / 15, getGunLocation());
+					createBullet(radian - PI / 7, getGunLocation());
+					createBullet(radian + PI / 7, getGunLocation());
+					AudioManager::playSound(SOUND_BULLET_SUPER);
 
 				}
 
@@ -441,12 +466,14 @@ void Soldier::createBullet(float radian, Point posGun)
 		indexBullet = 0;
 	}
 	if (this->bulletType == BulletType::Circle) {
+		bullet->damage = 2;
 		bullet->type = Type::circle;
 		bullet->alpha = 3*PI/2;
 		bullet->radian = radian;
 	}
 	else {
 		bullet->type = Type::normal;
+		bullet->damage = 1;
 	}
 
 }

@@ -17,29 +17,29 @@ bool Hud::init()
 
 	//if (choice == 0) {
 	
-	float jtXRatio = ref->getFloatForKey(KEYJOYSTICK_X);
-	float jtYRatio = ref->getFloatForKey(KEYJOYSTICK_Y);
+	auto jtXRatio = ref->getFloatForKey(KEYJOYSTICK_X);
+	auto jtYRatio = ref->getFloatForKey(KEYJOYSTICK_Y);
 
-	float jumpXRatio = ref->getFloatForKey(KEYBTNJUMP_X);
-	float jumpYRatio = ref->getFloatForKey(KEYBTNJUMP_Y);
+	auto jumpXRatio = ref->getFloatForKey(KEYBTNJUMP_X);
+	auto jumpYRatio = ref->getFloatForKey(KEYBTNJUMP_Y);
 
-	float fireXRatio = ref->getFloatForKey(KEYBTNFIRE_X);
-	float fireYRatio = ref->getFloatForKey(KEYBTNFIRE_Y);
+	auto fireXRatio = ref->getFloatForKey(KEYBTNFIRE_X);
+	auto fireYRatio = ref->getFloatForKey(KEYBTNFIRE_Y);
 
 	if (jtXRatio == NULL) {
-		jtXRatio = 0.17f;
-		jtYRatio = 0.20f;
+		jtXRatio = 0.17f * winSize.width;
+		jtYRatio = 0.20f * winSize.height;
 		
-		jumpXRatio = 0.73f;
-		jumpYRatio = 0.19f;
+		jumpXRatio = 0.73f * winSize.width;
+		jumpYRatio = 0.19f * winSize.height;
 
-		fireXRatio = 0.83f;
-		fireYRatio = 0.38f;
+		fireXRatio = 0.83f * winSize.width;
+		fireYRatio = 0.38f * winSize.height;
 	}
 
-	addJoystick(Point(origin.x + winSize.width * jtXRatio, origin.y + winSize.height * jtYRatio));
-	addJoystickButtonJump(Point(origin.x + winSize.width * jumpXRatio, origin.y + winSize.height * jumpYRatio));
-	addJoystickButtonFire(Point(origin.x + winSize.width * fireXRatio, origin.y + winSize.height * fireYRatio));
+	addJoystick(jtXRatio, jtYRatio);
+	addJoystickButtonJump(jumpXRatio, jumpYRatio);
+	addJoystickButtonFire(fireXRatio, fireYRatio);
 
 	/*} else
 		addButton();*/
@@ -72,17 +72,33 @@ bool Hud::init()
 	life_5->setPosition(Point(origin.x + winSize.width * 0.158f, origin.y + winSize.height * 0.9f));
 	addChild(life_5);
 
+	shield = Sprite::create("send/icon-shield.png");
+	shield->setScale(SCREEN_SIZE.height / 10 / shield->getContentSize().height);
+	shield->setPosition(Point(origin.x + winSize.width * 0.90f, origin.y + winSize.height * 0.9f));
+	shield->setOpacity(50);
+	addChild(shield);
+
+	defense = Label::createWithTTF("2", "fonts/Roboto_Light.ttf", 200);
+	defense->enableBold();
+	defense->setScale(SCREEN_SIZE.height / 23.0f / defense->getContentSize().height);
+	defense->setPosition(shield->getPositionX() + shield->getBoundingBox().size.width / 2, 
+						shield->getPositionY() - shield->getBoundingBox().size.height / 2);
+	defense->setVisible(false);
+	addChild(defense);
+
+
 	return true;
 }
 
-void Hud::addJoystick(Point pos)
+void Hud::addJoystick(float px, float py)
 {
-	auto rect_size = SCREEN_SIZE.height / 3;
+	auto rect_size = SCREEN_SIZE.height / 2.4f;
 	Rect joystickBaseDimensions = Rect(0, 0, rect_size, rect_size);
 
 	SneakyJoystickSkinnedBase *joystickBase = new SneakyJoystickSkinnedBase();
 	joystickBase->init();
-	joystickBase->setPosition(pos);
+	joystickBase->setAnchorPoint(Vec2::ZERO);
+	joystickBase->setPosition(px, py);
 
 	auto joystick_thumb = Sprite::create("send/btn-move.png");
 	auto joystick_bg = Sprite::create("send/move-area.png");
@@ -99,20 +115,22 @@ void Hud::addJoystick(Point pos)
 	addChild(joystickBase);
 }
 
-void Hud::addJoystickButtonJump(Point pos)
+void Hud::addJoystickButtonJump(float px, float py)
 {
-	auto rect_size = SCREEN_SIZE.height / 8;
+	auto rect_size = SCREEN_SIZE.height / 5.0f;
 	Rect joystickButtonRect = Rect(0, 0, rect_size, rect_size);
 
 	SneakyButtonSkinnedBase *joystickButtonBase = new SneakyButtonSkinnedBase();
 	joystickButtonBase->init();
-	auto b = Sprite::create("send/btn-jump.png");
+	auto b = Sprite::create("send/btn-jump.png"); b->setOpacity(140);
 
-	joystickButtonBase->setPosition(pos);
+	joystickButtonBase->setAnchorPoint(Vec2::ZERO);
+	joystickButtonBase->setPosition(px, py);
 	joystickButtonBase->setDefaultSprite(b);
+
 	joystickButtonBase->setActivatedSprite(Sprite::create("send/btn-jump.png"));
 	joystickButtonBase->setPressSprite(Sprite::create("send/btn-jump2.png"));
-	joystickButtonBase->setScale(SCREEN_SIZE.height / 5.0f / b->getContentSize().height);
+	joystickButtonBase->setScale(SCREEN_SIZE.height / 6.0f / b->getContentSize().height);
 
 	btnJump = new SneakyButton();
 	btnJump->initWithRect(joystickButtonRect);
@@ -121,25 +139,25 @@ void Hud::addJoystickButtonJump(Point pos)
 
 
 	joystickButtonBase->setButton(btnJump);
-
 	addChild(joystickButtonBase);
 }
 
-void Hud::addJoystickButtonFire(Point pos)
+void Hud::addJoystickButtonFire(float px, float py)
 {
-	auto rect_size = SCREEN_SIZE.height / 8;
+	auto rect_size = SCREEN_SIZE.height / 5.0f;
 	Rect joystickButtonRect = Rect(0, 0, rect_size, rect_size);
 
 	SneakyButtonSkinnedBase *joystickButtonBase = new SneakyButtonSkinnedBase();
 	joystickButtonBase->init();
-	auto b = Sprite::create("send/btn-shoot.png");
+	auto b = Sprite::create("send/btn-shoot.png"); b->setOpacity(140);
 
-	joystickButtonBase->setPosition(pos);
+	joystickButtonBase->setAnchorPoint(Vec2::ZERO);
+	joystickButtonBase->setPosition(px, py);
 	joystickButtonBase->setDefaultSprite(b);
 
 	joystickButtonBase->setActivatedSprite(Sprite::create("send/btn-shoot.png"));
 	joystickButtonBase->setPressSprite(Sprite::create("send/btn-shoot2.png"));
-	joystickButtonBase->setScale(SCREEN_SIZE.height / 5.0f / b->getContentSize().height);
+	joystickButtonBase->setScale(SCREEN_SIZE.height / 6.0f / b->getContentSize().height);
 
 	btnFire = new SneakyButton();
 	btnFire->initWithRect(joystickButtonRect);
@@ -148,7 +166,6 @@ void Hud::addJoystickButtonFire(Point pos)
 
 
 	joystickButtonBase->setButton(btnFire);
-
 	addChild(joystickButtonBase);
 }
 

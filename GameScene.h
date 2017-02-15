@@ -54,7 +54,7 @@ public:
 
 	set<int> listIndexExist;
 	vector<BulletOfHero *> existedBullet;
-	vector<Item*> items;
+	//vector<Item*> items;
 
 	//bool isTouchScreen = false;
 
@@ -117,9 +117,14 @@ public:
 	virtual void draw(Renderer *renderer, const Mat4 &transform, uint32_t flags) override;
 	void onDraw();
 
+	void resumeGame();
+	void pauseGame();
+
 	//bool onTouchBegan(Touch *touch, Event *unused_event);
 	//void onTouchMoved(Touch *touch, Event *unused_event);
 	//void onTouchEnded(Touch *touch, Event *unused_event);
+
+	void onKeyReleased(EventKeyboard::KeyCode keyCode, Event* event);
 
     // implement the "static create()" method manually
     CREATE_FUNC(GameScene);

@@ -21,8 +21,9 @@ PlaneSoldier * PlaneSoldier::create(string jsonFile, string atlasFile, float sca
 	plane->cur_state = IDLE;
 	plane->isOnTheAir = true;
 
+	plane->bulletType = BulletType::Slow;
 	plane->angle = 0;
-	plane->isNoDie = -180;		// time to respawn
+	plane->isNoDie = 0;		// time to respawn
 	return plane;
 }
 
@@ -37,7 +38,7 @@ void PlaneSoldier::initPhysic(b2World * world, Point pos)
 	fixtureDef.restitution = 0.0f;
 	fixtureDef.shape = &box_shape;
 	fixtureDef.filter.categoryBits = BITMASK_SOLDIER;
-	fixtureDef.filter.maskBits = BITMASK_ENEMY | BITMASK_BULLET_ENEMY | BITMASK_FLOOR | BITMASK_ITEM;
+	fixtureDef.filter.maskBits = BITMASK_ENEMY | BITMASK_BULLET_ENEMY | BITMASK_FLOOR | BITMASK_ITEM | BITMASK_BOMB_ENEMY;
 
 	b2BodyDef bodyDef;
 	bodyDef.type = b2_dynamicBody;
@@ -57,7 +58,7 @@ void PlaneSoldier::die(Point posOfCammera)
 		this->cur_state = IDLE;
 
 		this->isNoDie = -180;
-		this->changeBodyBitMask(BITMASK_ENEMY);
+		this->changeBodyBitMask(BITMASK_BLINK);
 		auto blink = CCBlink::create(1, 3);
 		auto visible = CallFunc::create([=] {
 			this->setVisible(true);
@@ -81,7 +82,7 @@ void PlaneSoldier::idle()
 void PlaneSoldier::idleShoot()
 {
 	if (pre_state != cur_state) {
-		log("AHHIHIHIH");
+		//log("AHHIHIHIH");
 		clearTracks();
 		addAnimation(0, "flying-shoot", true);
 		setToSetupPose();

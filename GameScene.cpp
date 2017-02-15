@@ -1,15 +1,18 @@
 #include "GameScene.h"
-#include "SimpleAudioEngine.h"
+#include "AudioEngine.h"
 #include "DynamicHumanEnemy.h"
 #include "MiniFort.h"
 #include "Fort.h"
 #include "HelicopterShootEnemy.h"
 #include "HelicopterBoomEnemy.h"
+#include "StartScene.h"
+//#include "Dialog.h"
 
 
 USING_NS_CC;
 
 Hud *hud;
+//Dialog *dialog;
 
 Scene* GameScene::createScene()
 {
@@ -18,12 +21,15 @@ Scene* GameScene::createScene()
 
 	// 'layer' is an autorelease object
 	hud = Hud::create();
+	//dialog = Dialog::create();
 	auto layer = GameScene::create();
+	layer->setTag(TAG_GAME);
+
 
 	// add layer as a child to scene
 	scene->addChild(layer);
 	scene->addChild(hud);
-
+	//scene->addChild(dialog);
 	// return the scene
 	return scene;
 }
@@ -42,18 +48,20 @@ bool GameScene::init()
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
+	setKeyboardEnabled(true);
+
 	// world
 	world = new b2World(b2Vec2(0, -visibleSize.height * 8.0f / 3.0f / PTM_RATIO));
 
 	// draw debug
 	//debugDraw = new (std::nothrow) GLESDebugDraw(PTM_RATIO);
 	//world->SetDebugDraw(debugDraw);
-	uint32 flags = 0;
-	flags += b2Draw::e_shapeBit;
-	flags += b2Draw::e_jointBit;
-	// flags += b2Draw::e_aabbBit;
-	// flags += b2Draw::e_pairBit;
-	// flags += b2Draw::e_centerOfMassBit;
+	//uint32 flags = 0;
+	//flags += b2Draw::e_shapeBit;
+	//flags += b2Draw::e_jointBit;
+	//flags += b2Draw::e_aabbBit;
+	//flags += b2Draw::e_pairBit;
+	//flags += b2Draw::e_centerOfMassBit;
 	//debugDraw->SetFlags(flags);
 
 	world->SetAllowSleeping(true);
@@ -129,19 +137,25 @@ void GameScene::update(float dt)
 	switchItem(dt);
 
 	for (int i = 0; i < existedBullet.size(); i++) {
+		log("AAA %i", i);
 		auto bullet = (BulletOfHero*)existedBullet[i];
 		bullet->update(dt);
-		if (abs(bullet->getPositionX() - follow->getPositionX()) > SCREEN_SIZE.width / 2) {
+		if (fabs(bullet->getPositionX() - follow->getPositionX()) > SCREEN_SIZE.width / 2 ||
+			bullet->getPositionY() < 0 || bullet->getPositionY() > SCREEN_SIZE.height
+			) {
+			bullet->setVisible(false);
 			listIndexExist.insert(i);
 		}
 	}
 
 	if (listIndexExist.size() != 0 && listIndexExist.size() == existedBullet.size()) {
 		for (auto i : existedBullet) {
-			if(i->body != nullptr)
+			log("BBB");
+			if (i->body != nullptr)
 				world->DestroyBody(i->body);
-			i->setVisible(false);
-			removeChildByTag(i->getTag());
+			i->body = nullptr;
+
+			i->removeFromParentAndCleanup(true);
 		}
 
 		existedBullet.clear();
@@ -151,7 +165,7 @@ void GameScene::update(float dt)
 	for (int i = 0; i < soldier->bulletPool->count(); i++) {
 		auto bullet = ((BulletOfHero*)soldier->bulletPool->getObjectAtIndex(i));
 		bullet->update(dt);
-		if (abs(bullet->getPositionX() - follow->getPositionX()) > SCREEN_SIZE.width / 2) {
+		if (fabs(bullet->getPositionX() - follow->getPositionX()) > SCREEN_SIZE.width / 2) {
 			bullet->isDie = true;
 		}
 
@@ -161,7 +175,7 @@ void GameScene::update(float dt)
 				world->DestroyBody(bullet->body);
 				bullet->body = nullptr;
 			}
-			
+
 			bullet->setVisible(false);
 			bullet->isDie = false;
 		}
@@ -229,8 +243,39 @@ void GameScene::updateSoldier(float dt)
 	}
 
 	if (soldier->cur_state == State::DIE) {
-		soldier->health--;
-		soldier->die(follow->getPosition());
+		if (hud->defense->isVisible()) {
+			soldier->defense--;
+			soldier->die(follow->getPosition());
+			if (soldier->defense < 0) {
+
+				hud->shield->setOpacity(50);
+
+				auto lastPos = soldier->getPosition();
+				auto sizeSoldier = soldier->sizeSoldier;
+
+				//auto callFunc = CallFunc::create([&]() {
+				removeOlderSoldier();
+				createSoldier(Point(lastPos.x, lastPos.y + sizeSoldier.height));
+
+				//soldier->die(Point(lastPos.x, lastPos.y + sizeSoldier.height));
+				auto ref = UserDefault::getInstance()->sharedUserDefault();
+				soldier->health = ref->getIntegerForKey(KEY_HEALTH);
+				soldier->body->SetLinearVelocity(b2Vec2(0.0f, soldier->jump_vel));
+
+				hud->btnJump->getParent()->setVisible(true);
+				hud->defense->setVisible(false);
+				//});
+
+				//soldier->runAction((Sequence::create(DelayTime::create(0.5f), callFunc, nullptr)));
+
+			}
+		}
+		else {
+			soldier->health--;
+			soldier->die(follow->getPosition());
+		}
+
+
 	}
 
 	switch (soldier->health)
@@ -243,7 +288,7 @@ void GameScene::updateSoldier(float dt)
 			hud->life_2->setVisible(true);
 			hud->life_1->setVisible(true);
 		}
-			
+
 		break;
 	}
 	case 4: {
@@ -282,6 +327,10 @@ void GameScene::updateSoldier(float dt)
 	default:
 		//log("End game");
 		break;
+	}
+
+	if (hud->defense->isVisible()) {
+		hud->defense->setString(StringUtils::toString(soldier->defense));
 	}
 }
 
@@ -331,9 +380,13 @@ void GameScene::updateStandMan(float dt)
 
 void GameScene::removeOlderSoldier()
 {
+	auto ref = UserDefault::getInstance()->sharedUserDefault();
+	ref->setIntegerForKey(KEY_HEALTH, soldier->health); ref->flush();
 	for (int i = 0; i < soldier->bulletPool->count(); i++) {
 		auto bullet = (BulletOfHero*)soldier->bulletPool->getObjectAtIndex(i);
-		if (abs(bullet->getPositionX() - follow->getPositionX()) < SCREEN_SIZE.width / 2) {
+		if (fabs(bullet->getPositionX() - follow->getPositionX()) < SCREEN_SIZE.width / 2 ||
+			bullet->getPositionY() < 0 || bullet->getPositionY() > SCREEN_SIZE.height
+			) {
 			existedBullet.push_back((BulletOfHero*)soldier->bulletPool->getObjectAtIndex(i));
 		}
 	}
@@ -347,10 +400,15 @@ void GameScene::removeOlderSoldier()
 
 void GameScene::transformTank(Point pos)
 {
+	hud->defense->setVisible(true);
+	hud->shield->setOpacity(255);
+	auto ref = UserDefault::getInstance()->sharedUserDefault();
+	AudioManager::playSound(SOUND_TRANSFORM);
 	removeOlderSoldier();
 
 	if (soldier == nullptr) {
 		soldier = TankSoldier::create("tank/tank.json", "tank/tank.atlas", SCREEN_SIZE.height / 8.8f / 113.0f);
+		soldier->health = ref->getIntegerForKey(KEY_HEALTH);
 		soldier->setPosition(pos);
 		addChild(soldier, ZORDER_SOLDIER);
 		soldier->initPhysic(world, soldier->getPosition());
@@ -363,7 +421,14 @@ void GameScene::transformTank(Point pos)
 
 void GameScene::transformHelicopter(Point pos)
 {
+	hud->defense->setVisible(false);
 	removeOlderSoldier();
+	/*auto ref = UserDefault::getInstance()->sharedUserDefault();
+	bool checkSound = ref->getBoolForKey(KEYSOUND);
+	if (checkSound) {
+		experimental::AudioEngine::play2d(SOUND_TRANSFORM2);
+	}*/
+	AudioManager::playSound(SOUND_TRANSFORM2);
 
 	if (soldier == nullptr) {
 		soldier = HelicopterSoldier::create("enemy-helicopter/helicopter.json", "enemy-helicopter/helicopter.atlas", SCREEN_SIZE.height / 12.7f / 80.0f);
@@ -380,8 +445,14 @@ void GameScene::transformHelicopter(Point pos)
 
 void GameScene::transformPlane(Point pos)
 {
+	hud->defense->setVisible(false);
 	removeOlderSoldier();
-
+	/*auto ref = UserDefault::getInstance()->sharedUserDefault();
+	bool checkSound = ref->getBoolForKey(KEYSOUND);
+	if (checkSound) {
+		experimental::AudioEngine::play2d(SOUND_TRANSFORM2);
+	}*/
+	AudioManager::playSound(SOUND_TRANSFORM2);
 	if (soldier == nullptr) {
 		soldier = PlaneSoldier::create("plane/plane.json", "plane/plane.atlas", SCREEN_SIZE.height / 11.0f / 80.0f);
 		soldier->setPosition(pos);
@@ -397,57 +468,199 @@ void GameScene::transformPlane(Point pos)
 
 void GameScene::switchItem(float dt)
 {
-	for (auto i : items) {
-		i->update(dt);
-		if (i->isTaken) {
-			switch (i->type)
-			{
-			case TYPE::TANK: {
-				if (hud->btnJump->getParent()->isVisible()) {
-					hud->btnJump->getParent()->setVisible(false);
-				}
-				transformTank(i->getPosition() + i->getParent()->getPosition());
-				break;
-			}
-			case TYPE::HEALTH: {
-				if(soldier->health < 5)
-					soldier->health++;
-				break;
-			}
-			case TYPE::HELICOPTER: {
-				if (hud->btnJump->getParent()->isVisible()) {
-					hud->btnJump->getParent()->setVisible(false);
-				}
-				transformHelicopter(i->getPosition() + i->getParent()->getPosition());
-				
-				break;
-			}
-			case TYPE::FAST_BULLET: {
-				soldier->bulletType = BulletType::Fast;
-				break;
-			}
-			case TYPE::MULT_BULLET: {
-				soldier->bulletType = BulletType::Super;
-				break;
-			}
-			case TYPE::ORBIT_BULLET: {
-				soldier->bulletType = BulletType::Circle;
-				break;
-			}
-			case TYPE::PLANE: {
-				if (hud->btnJump->getParent()->isVisible()) {
-					hud->btnJump->getParent()->setVisible(false);
-				}
-				transformPlane(i->getPosition() + i->getParent()->getPosition());
-				break;
-			}
-			default:
-				break;
-			}
+	//for (auto i : items) {
 
-			i->isTaken = false;
-			world->DestroyBody(i->body);
-			i->setVisible(false);
+	//	if (i != nullptr && i->isTaken) {
+	//		/*auto ref = UserDefault::getInstance()->sharedUserDefault();
+	//		bool checkSound = ref->getBoolForKey(KEYSOUND);
+	//		if (checkSound) {
+	//			experimental::AudioEngine::play2d(SOUND_GET_ITEM);
+	//		}*/
+	//		AudioManager::playSound(SOUND_GET_ITEM);
+	//		switch (i->type)
+	//		{
+	//		case TYPE::TANK: {
+	//			if (hud->btnJump->getParent()->isVisible()) {
+	//				hud->btnJump->getParent()->setVisible(false);
+	//			}
+	//			transformTank(i->getPosition() + i->getParent()->getPosition());
+	//			break;
+	//		}
+	//		case TYPE::HEALTH: {
+	//			if (soldier->health < 5)
+	//				soldier->health++;
+	//			break;
+	//		}
+	//		case TYPE::HELICOPTER: {
+	//			if (hud->btnJump->getParent()->isVisible()) {
+	//				hud->btnJump->getParent()->setVisible(false);
+	//			}
+	//			transformHelicopter(i->getPosition() + i->getParent()->getPosition());
+
+	//			break;
+	//		}
+	//		case TYPE::FAST_BULLET: {
+	//			soldier->bulletType = BulletType::Fast;
+	//			break;
+	//		}
+	//		case TYPE::MULT_BULLET: {
+	//			soldier->bulletType = BulletType::Super;
+	//			break;
+	//		}
+	//		case TYPE::ORBIT_BULLET: {
+	//			soldier->bulletType = BulletType::Circle;
+	//			break;
+	//		}
+	//		case TYPE::PLANE: {
+	//			if (hud->btnJump->getParent()->isVisible()) {
+	//				hud->btnJump->getParent()->setVisible(false);
+	//			}
+	//			transformPlane(i->getPosition() + i->getParent()->getPosition());
+	//			break;
+	//		}
+	//		default:
+	//			break;
+	//		}
+	//		i->isTaken = false;
+	//		world->DestroyBody(i->body);
+	//		i->body = nullptr;
+	//		i->setVisible(false);
+	//		i->removeFromParentAndCleanup(true);
+	//		//i = nullptr;
+	//	}
+	//	else
+	//		i->update(dt);
+	//}
+
+	if (layCurrentMap != nullptr) {
+		auto listObj = layCurrentMap->getChildren();
+		for (auto e : listObj) {
+			if (e->getTag() == TAG_ITEM) {
+				auto tmp = (Item*)e;
+				if (tmp->isTaken) {
+					AudioManager::playSound(SOUND_GET_ITEM);
+					switch (tmp->type)
+					{
+					case TYPE::TANK: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformTank(tmp->getPosition() + tmp->getParent()->getPosition());
+						break;
+					}
+					case TYPE::HEALTH: {
+						if (soldier->health < 5)
+							soldier->health++;
+						break;
+					}
+					case TYPE::HELICOPTER: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformHelicopter(tmp->getPosition() + tmp->getParent()->getPosition());
+
+						break;
+					}
+					case TYPE::FAST_BULLET: {
+						soldier->bulletType = BulletType::Fast;
+						break;
+					}
+					case TYPE::MULT_BULLET: {
+						soldier->bulletType = BulletType::Super;
+						break;
+					}
+					case TYPE::ORBIT_BULLET: {
+						soldier->bulletType = BulletType::Circle;
+						break;
+					}
+					case TYPE::PLANE: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformPlane(tmp->getPosition() + tmp->getParent()->getPosition());
+						break;
+					}
+					default:
+						break;
+					}
+
+					tmp->isTaken = false;
+					world->DestroyBody(tmp->body);
+					tmp->body = nullptr;
+					tmp->setVisible(false);
+					tmp->removeFromParentAndCleanup(true);
+				}
+
+				else {
+					tmp->update(dt);
+				}
+			}
+		}
+	}
+
+	if (layNextMap != nullptr) {
+		auto listObj = layNextMap->getChildren();
+		for (auto e : listObj) {
+			if (e->getTag() == TAG_ITEM) {
+				auto tmp = (Item*)e;
+				if (tmp->isTaken) {
+					AudioManager::playSound(SOUND_GET_ITEM);
+					switch (tmp->type)
+					{
+					case TYPE::TANK: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformTank(tmp->getPosition() + tmp->getParent()->getPosition());
+						break;
+					}
+					case TYPE::HEALTH: {
+						if (soldier->health < 5)
+							soldier->health++;
+						break;
+					}
+					case TYPE::HELICOPTER: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformHelicopter(tmp->getPosition() + tmp->getParent()->getPosition());
+
+						break;
+					}
+					case TYPE::FAST_BULLET: {
+						soldier->bulletType = BulletType::Fast;
+						break;
+					}
+					case TYPE::MULT_BULLET: {
+						soldier->bulletType = BulletType::Super;
+						break;
+					}
+					case TYPE::ORBIT_BULLET: {
+						soldier->bulletType = BulletType::Circle;
+						break;
+					}
+					case TYPE::PLANE: {
+						if (hud->btnJump->getParent()->isVisible()) {
+							hud->btnJump->getParent()->setVisible(false);
+						}
+						transformPlane(tmp->getPosition() + tmp->getParent()->getPosition());
+						break;
+					}
+					default:
+						break;
+					}
+
+					tmp->isTaken = false;
+					world->DestroyBody(tmp->body);
+					tmp->body = nullptr;
+					tmp->setVisible(false);
+					tmp->removeFromParentAndCleanup(true);
+				}
+
+				else {
+					tmp->update(dt);
+				}
+			}
 		}
 	}
 }
@@ -463,7 +676,8 @@ void GameScene::createPool()
 	for (int i = 0; i < 8; i++) {
 		auto enemy = DynamicHumanEnemy::create(SCREEN_SIZE.height / 11.0f / 242.0f);
 		enemy->setPosition(INT_MAX, INT_MAX);
-		enemy->initCirclePhysic(world, Point(INT_MAX, INT_MAX));
+		//enemy->initCirclePhysic(world, Point(INT_MAX, INT_MAX));
+		enemy->body = nullptr;
 		this->addChild(enemy, ZORDER_ENEMY);
 		dEnemyPool->addObject(enemy);
 	}
@@ -493,7 +707,14 @@ void GameScene::genDEnemy()
 	enemy->setPosition(posGenDEnemy);
 	//enemy->body->SetTransform(b2Vec2(posGenDEnemy.x / PTM_RATIO, posGenDEnemy.y / PTM_RATIO), 0);
 	//enemy->body->SetType(b2_dynamicBody);
+	if (enemy->body != nullptr) {
+		world->DestroyBody(enemy->body);
+	}
 	enemy->initCirclePhysic(world, posGenDEnemy);
+	enemy->body->SetFixedRotation(false);
+	auto fixture = enemy->body->GetFixtureList();
+	fixture->SetFriction(0);
+
 	indexDEnemy++;
 	if (indexDEnemy == dEnemyPool->count()) {
 		indexDEnemy = 0;
@@ -690,7 +911,7 @@ void GameScene::loadNextMap()
 
 		indexOfCurrentMap++;
 		originOfLastMap = originOfNextmap;
-		log("next map: %d", indexOfCurrentMap);
+		//log("next map: %d", indexOfCurrentMap);
 	}
 }
 
@@ -704,14 +925,14 @@ void GameScene::freePassedMap()
 			vector <b2Body*> toDestroy;
 
 			for (auto body = world->GetBodyList(); body; body = body->GetNext()) {
-				log("POS BODY: %f", body->GetPosition().x*PTM_RATIO);
-				log("POS ORIGIN: %f", layNextMap->getPositionX());
+				//log("POS BODY: %f", body->GetPosition().x*PTM_RATIO);
+				//log("POS ORIGIN: %f", layNextMap->getPositionX());
 				if (body->GetPosition().x*PTM_RATIO < layNextMap->getPositionX()) {
 					toDestroy.push_back(body);
 				}
 			}
 			for (auto a : toDestroy) {
-				log("Destroy layout");
+				//log("Destroy layout");
 				world->DestroyBody(a);
 			}
 			layCurrentMap->removeAllChildrenWithCleanup(true);
@@ -1068,13 +1289,12 @@ void GameScene::buildItem(TMXTiledMap * map, Layer * layer, float scale, string 
 
 		auto item = Item::create(frameName, type);
 		item->setScale(SCREEN_SIZE.height / 8.0f / item->getContentSize().height);
-		item->size = item->getBoundingBox().size;
 		Point pos = Point(origin.x, origin.y + SCREEN_SIZE.height / Y_INCREMENT_RATIO);
 		item->setPosition(pos);
 		item->initPhysic(world, pos + originThisMap, b2_dynamicBody);
 		layer->addChild(item, ZORDER_ENEMY);
 
-		items.push_back(item);
+		//items.push_back(item);
 	}
 
 }
@@ -1087,7 +1307,7 @@ void GameScene::controlSneakyJoystick()
 	float degree = hud->joystick->getDegrees();
 	auto joystickVel = hud->joystick->getVelocity();
 	if (soldier->isOnTheAir) {
-		if(soldier->cur_state != IDLE)
+		if (soldier->cur_state != IDLE)
 			soldier->cur_state = IDLE;
 		soldier->moveFollow(joystickVel);
 		return;
@@ -1121,7 +1341,7 @@ void GameScene::controlSneakyJoystick()
 		soldier->angle = PI / 2;
 		if (soldier->body->GetLinearVelocity().x != 0.0f)
 			soldier->body->SetLinearVelocity(b2Vec2(0.0f, 0.0f));
-		soldier->facingRight = true;
+
 		if (soldier->onGround)
 			soldier->cur_state = IDLE_SHOOT_UP;
 	}
@@ -1157,7 +1377,7 @@ void GameScene::controlSneakyJoystick()
 			soldier->angle = PI;
 		}
 
-		if(soldier->onGround)
+		if (soldier->onGround)
 			soldier->cur_state = LYING_SHOOT;
 	}
 	else if (degree >= 290.0f && degree < 330.0f) {
@@ -1188,7 +1408,7 @@ void GameScene::controlSneakyButtonFire()
 		if (soldier->cur_state == IDLE) {
 			soldier->cur_state = IDLE_SHOOT;
 		}
-			
+
 		soldier->shoot(soldier->angle);
 	}
 }
@@ -1367,6 +1587,32 @@ void GameScene::onDraw()
 	director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, _modelViewMV);
 	world->DrawDebugData();
 	director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, oldMV);
+}
+
+void GameScene::resumeGame()
+{
+	//Director::getInstance()->resume();
+	this->resume();
+}
+
+void GameScene::pauseGame()
+{
+	//dialog->_listener = EventListenerTouchOneByOne::create();
+	//dialog->_listener->onTouchBegan = CC_CALLBACK_2(Dialog::onTouchBegan, dialog);
+	//_eventDispatcher->addEventListenerWithSceneGraphPriority(dialog->_listener, dialog);
+
+	//dialog->setVisible(true);
+
+	//Director::getInstance()->pause();
+	this->pause();
+}
+
+void GameScene::onKeyReleased(EventKeyboard::KeyCode keyCode, Event * event)
+{
+	if (keyCode == EventKeyboard::KeyCode::KEY_ESCAPE) {
+		//pauseGame();
+		Director::getInstance()->replaceScene(StartScene::createScene());
+	}
 }
 
 //bool GameScene::onTouchBegan(Touch * touch, Event * unused_event)
