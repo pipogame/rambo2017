@@ -40,52 +40,33 @@ bool Hud::init()
 	addJoystick(jtXRatio, jtYRatio);
 	addJoystickButtonJump(jumpXRatio, jumpYRatio);
 	addJoystickButtonFire(fireXRatio, fireYRatio);
+	addJoystickButtonPause();
+
+	menuLife = new Sprite*[5];
+
+	for (int i = 0; i < 5; i++) {
+		menuLife[i] = Sprite::create("send/item-life.png");
+		menuLife[i]->setScale(SCREEN_SIZE.height / 12 / menuLife[i]->getContentSize().height);
+		menuLife[i]->setPosition(Point(origin.x + winSize.width * (0.05f + i * 0.03f), origin.y + winSize.height * 0.9f));
+		addChild(menuLife[i]);
+	}
 
 	/*} else
 		addButton();*/
-	life_1 = Sprite::create("send/item-life.png");
-	life_1->setScale(SCREEN_SIZE.height / 12 / life_1->getContentSize().height);
-	life_1->setPosition(Point(origin.x + winSize.width * 0.05f, origin.y + winSize.height * 0.9f));
-	addChild(life_1);
-
-
-	life_2 = Sprite::create("send/item-life.png");
-	life_2->setScale(SCREEN_SIZE.height / 12 / life_2->getContentSize().height);
-	life_2->setPosition(Point(origin.x + winSize.width * 0.077f, origin.y + winSize.height * 0.9f));
-	addChild(life_2);
-
-
-	life_3 = Sprite::create("send/item-life.png");
-	life_3->setScale(SCREEN_SIZE.height / 12 / life_3->getContentSize().height);
-	life_3->setPosition(Point(origin.x + winSize.width * 0.104f, origin.y + winSize.height * 0.9f));
-	addChild(life_3);
-
-
-	life_4 = Sprite::create("send/item-life.png");
-	life_4->setScale(SCREEN_SIZE.height / 12 / life_4->getContentSize().height);
-	life_4->setPosition(Point(origin.x + winSize.width * 0.131f, origin.y + winSize.height * 0.9f));
-	addChild(life_4);
-
-
-	life_5 = Sprite::create("send/item-life.png");
-	life_5->setScale(SCREEN_SIZE.height / 12 / life_5->getContentSize().height);
-	life_5->setPosition(Point(origin.x + winSize.width * 0.158f, origin.y + winSize.height * 0.9f));
-	addChild(life_5);
 
 	shield = Sprite::create("send/icon-shield.png");
-	shield->setScale(SCREEN_SIZE.height / 10 / shield->getContentSize().height);
-	shield->setPosition(Point(origin.x + winSize.width * 0.90f, origin.y + winSize.height * 0.9f));
-	shield->setOpacity(50);
+	shield->setScale(SCREEN_SIZE.height / 12 / shield->getContentSize().height);
+	shield->setPosition(Point(origin.x + winSize.width * 0.06f, origin.y + winSize.height * 0.78f));
+	shield->setVisible(false);
 	addChild(shield);
 
-	defense = Label::createWithTTF("2", "fonts/Roboto_Light.ttf", 200);
+	defense = Label::createWithTTF("3", "fonts/Roboto_Light.ttf", 200);
 	defense->enableBold();
 	defense->setScale(SCREEN_SIZE.height / 23.0f / defense->getContentSize().height);
 	defense->setPosition(shield->getPositionX() + shield->getBoundingBox().size.width / 2, 
 						shield->getPositionY() - shield->getBoundingBox().size.height / 2);
 	defense->setVisible(false);
 	addChild(defense);
-
 
 	return true;
 }
@@ -117,7 +98,7 @@ void Hud::addJoystick(float px, float py)
 
 void Hud::addJoystickButtonJump(float px, float py)
 {
-	auto rect_size = SCREEN_SIZE.height / 5.0f;
+	auto rect_size = SCREEN_SIZE.height / 6.0f;
 	Rect joystickButtonRect = Rect(0, 0, rect_size, rect_size);
 
 	SneakyButtonSkinnedBase *joystickButtonBase = new SneakyButtonSkinnedBase();
@@ -144,7 +125,7 @@ void Hud::addJoystickButtonJump(float px, float py)
 
 void Hud::addJoystickButtonFire(float px, float py)
 {
-	auto rect_size = SCREEN_SIZE.height / 5.0f;
+	auto rect_size = SCREEN_SIZE.height / 6.0f;
 	Rect joystickButtonRect = Rect(0, 0, rect_size, rect_size);
 
 	SneakyButtonSkinnedBase *joystickButtonBase = new SneakyButtonSkinnedBase();
@@ -166,6 +147,34 @@ void Hud::addJoystickButtonFire(float px, float py)
 
 
 	joystickButtonBase->setButton(btnFire);
+	addChild(joystickButtonBase);
+}
+
+void Hud::addJoystickButtonPause()
+{
+	auto rect_size = SCREEN_SIZE.height / 9.0f;
+	Rect joystickButtonRect = Rect(0, 0, rect_size, rect_size);
+
+	SneakyButtonSkinnedBase *joystickButtonBase = new SneakyButtonSkinnedBase();
+	joystickButtonBase->init();
+	auto b = Sprite::create("send/pause-button.png");
+	auto origin = Director::getInstance()->getVisibleOrigin();
+
+	joystickButtonBase->setAnchorPoint(Vec2::ZERO);
+	joystickButtonBase->setPosition(origin + SCREEN_SIZE * 0.9f);
+	joystickButtonBase->setDefaultSprite(b);
+
+	joystickButtonBase->setActivatedSprite(Sprite::create("send/pause-button.png"));
+	joystickButtonBase->setPressSprite(Sprite::create("send/pause-button.png"));
+	joystickButtonBase->setScale(SCREEN_SIZE.height / 11.0f / b->getContentSize().height);
+
+	btnPause = new SneakyButton();
+	btnPause->initWithRect(joystickButtonRect);
+	btnPause->autorelease();
+	btnPause->retain();
+
+
+	joystickButtonBase->setButton(btnPause);
 	addChild(joystickButtonBase);
 }
 

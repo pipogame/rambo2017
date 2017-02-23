@@ -2,6 +2,10 @@
 #include "SimpleAudioEngine.h"
 #include "AudioEngine.h"
 
+#ifdef SDKBOX_ENABLED
+#include "PluginGoogleAnalytics/PluginGoogleAnalytics.h"
+#include "PluginAdMob/PluginAdMob.h"
+#endif
 
 
 Scene* StartScene::createScene()
@@ -27,7 +31,16 @@ bool StartScene::init()
 	{
 		return false;
 	}
-
+#ifdef SDKBOX_ENABLED
+	sdkbox::PluginGoogleAnalytics::logScreen("StartScene");
+	//sdkbox::PluginGoogleAnalytics::dispatchHits();
+#endif
+#ifdef SDKBOX_ENABLED
+	if (sdkbox::PluginAdMob::isAvailable("home")) {
+		sdkbox::PluginAdMob::show("home");
+	}
+	
+#endif
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -35,83 +48,48 @@ bool StartScene::init()
 
 	// add Start sprite
 	auto backGround = Sprite::create("background.png");
+
 	backGround->setScaleX(visibleSize.width / backGround->getContentSize().width);
 	backGround->setScaleY(visibleSize.height / backGround->getContentSize().height);
 	backGround->setPosition(origin + visibleSize / 2);
+
 	addChild(backGround);
 
-	// cache frame
-	SpriteFrameCache::getInstance()->addSpriteFramesWithFile("map1.plist");
-	Director::getInstance()->getTextureCache()->addImage("box/lid.png");
-
 	ref = UserDefault::getInstance()->sharedUserDefault();
-	ref->setIntegerForKey(KEY_CHOICE, 1); ref->flush();
 
-	// sound and effect
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/boss_explosion.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/cannon shoot.mp3");		// touch me
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/enemy bullet.mp3");			// attack
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/enemy_bomb.mp3");		// on me
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/enemy_bomb_explosion.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/F bullet.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/FormatFactoryplane_bomb.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/get item.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/helicopter.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/machine gun.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/missle.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/normal bullet.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/plane_bomb.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/plane_drop.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/S Bullet.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/sound_lose.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/tank move.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/tank shoot .mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/tank_explosion.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/theme_music.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/transform.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/transform_2.mp3");
-	//CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sound/Win.mp3");
-	////
-	//CocosDenshion::SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(0.75f);
-	//CocosDenshion::SimpleAudioEngine::getInstance()->setEffectsVolume(0.75f);
-
-
-	experimental::AudioEngine::preload("sound/boss_explosion.mp3");
-	experimental::AudioEngine::preload("sound/cannon shoot.mp3");		// touch me
-	experimental::AudioEngine::preload("sound/enemy bullet.mp3");			// attack
-	experimental::AudioEngine::preload("sound/enemy_bomb.mp3");		// on me
-	experimental::AudioEngine::preload("sound/enemy_bomb_explosion.mp3");
-	experimental::AudioEngine::preload("sound/F bullet.mp3");
-	experimental::AudioEngine::preload("sound/FormatFactoryplane_bomb.mp3");
-	experimental::AudioEngine::preload("sound/get item.mp3");
-	experimental::AudioEngine::preload("sound/helicopter.mp3");
-	experimental::AudioEngine::preload("sound/machine gun.mp3");
-	experimental::AudioEngine::preload("sound/missle.mp3");
-	experimental::AudioEngine::preload("sound/normal bullet.mp3");
-	experimental::AudioEngine::preload("sound/plane_bomb.mp3");
-	experimental::AudioEngine::preload("sound/plane_drop.mp3");
-	experimental::AudioEngine::preload("sound/S Bullet.mp3");
-	experimental::AudioEngine::preload("sound/sound_lose.mp3");
-	experimental::AudioEngine::preload("sound/tank move.mp3");
-	experimental::AudioEngine::preload("sound/tank shoot .mp3");
-	experimental::AudioEngine::preload("sound/tank_explosion.mp3");
-	experimental::AudioEngine::preload("sound/theme_music.mp3");
-	experimental::AudioEngine::preload("sound/transform.mp3");
-	experimental::AudioEngine::preload("sound/transform_2.mp3");
-	experimental::AudioEngine::preload("sound/Win.mp3");
-
-
-	auto labelVer = Label::createWithTTF("2017-02-15-Build 1", "fonts/Marker Felt.ttf", 200);
+	/*auto labelVer = Label::createWithTTF("2017-02-22-Build 1", "fonts/Marker Felt.ttf", 200);
 	labelVer->setScale(visibleSize.height / 24.0f / labelVer->getContentSize().height);
 	labelVer->setPosition(origin.x + visibleSize.width * 0.90f, origin.y + visibleSize.height * 0.96f);
-	addChild(labelVer);
+	addChild(labelVer);*/
 
-
+	//////////////////////////////////////////////////////////////////////////
 	auto ground = Sprite::createWithSpriteFrameName("ground.png");
 	ground->setAnchorPoint(Vec2(0.5, 0));
 	ground->setPosition(origin.x + visibleSize.width / 2, origin.y);
 	ground->setScale(visibleSize.width / ground->getContentSize().width);
 	addChild(ground);
+
+	grass1 = Sprite::createWithSpriteFrameName("grass-1.png");
+	grass1->setScale(visibleSize.height / 20 / grass1->getContentSize().height);
+
+	grass2 = Sprite::createWithSpriteFrameName("grass-2.png");
+	grass2->setScale(visibleSize.height / 20 / grass1->getContentSize().height);
+
+	grass3 = Sprite::createWithSpriteFrameName("grass-3.png");
+	grass3->setScale(visibleSize.height / 23 / grass1->getContentSize().height);
+
+	addChild(grass1);
+	addChild(grass2);
+	addChild(grass3);
+
+	grass1->setAnchorPoint(Point(0.5, 0));
+	grass2->setAnchorPoint(Point(0.5, 0));
+	grass3->setAnchorPoint(Point(0.5, 0));
+
+	grass1->setPosition(visibleSize.width * 3 / 8, visibleSize.height / 4.71f);
+	grass2->setPosition(visibleSize.width * 7 / 8, visibleSize.height / 5.34f);
+	grass3->setPosition(visibleSize.width * 8 / 9, visibleSize.height / 5.45f);
+
 
 	auto rambo = Sprite::createWithSpriteFrameName("title-ramball.png");
 	rambo->setPosition(origin.x + visibleSize.width / 2, origin.y + visibleSize.height * 0.65f);
@@ -124,17 +102,29 @@ bool StartScene::init()
 	addChild(skeleton);
 
 	play = Sprite::createWithSpriteFrameName("btn-play.png");
-	play->setScale(visibleSize.height / 5.0f / play->getContentSize().height);
+	play->setScale(visibleSize.height / 4.5f / play->getContentSize().height);
 	auto posX = visibleSize.width / 2 + rambo->getBoundingBox().size.width / 2 + play->getBoundingBox().size.width * 0.7f;
-	play->setPosition(origin.x + posX, origin.y + visibleSize.height * 0.65f);
+	play->setPosition(origin.x + posX, origin.y + visibleSize.height * 0.6f);
 	addChild(play);
 
 	setting = Sprite::create("send/btn-setting.png");
-	setting->setScale(visibleSize.height / 9.0f / setting->getContentSize().height);
-	setting->setPosition(origin.x + visibleSize.width * 0.1f, origin.y + visibleSize.height * 0.85f);
-	addChild(setting);
+	setting->setScale(visibleSize.height / 8.0f / setting->getContentSize().height);
+	setting->setPosition(origin.x + visibleSize.width * 0.1f, origin.y + visibleSize.height * 0.83f);
+	addChild(setting, 3);
 
-	gp1 = Sprite::create("send/GP1.png");
+
+	if (ref->getIntegerForKey(KEYGUIDE) == NULL) {
+		auto scale1 = setting->getScale();
+		setting->runAction(RepeatForever::create(Sequence::create(ScaleTo::create(0.4f, scale1*1.1f), ScaleTo::create(0.4f, scale1), nullptr)));
+		auto setting_text = Sprite::create("send/setting.png");
+		setting_text->setScale(visibleSize.height / 9.0f / setting_text->getContentSize().height);
+		setting_text->setPosition(origin.x + visibleSize.width * 0.1f, origin.y + visibleSize.height * 0.71f);
+		addChild(setting_text, 3);
+		auto scale2 = setting_text->getScale();
+		setting_text->runAction(RepeatForever::create(Sequence::create(ScaleTo::create(0.4f, scale2*1.1f), ScaleTo::create(0.4f, scale2), nullptr)));
+	}
+
+	/*gp1 = Sprite::create("send/GP1.png");
 	gp1->setScale(visibleSize.height / 9.0f / gp1->getContentSize().height);
 	gp1->setPosition(origin.x + visibleSize.width * 0.15f, origin.y + visibleSize.height * 0.4f);
 	addChild(gp1);
@@ -152,24 +142,27 @@ bool StartScene::init()
 	gp4 = Sprite::create("send/GP4.png");
 	gp4->setScale(visibleSize.height / 9.0f / gp4->getContentSize().height);
 	gp4->setPosition(origin.x + visibleSize.width * 0.85f, origin.y + visibleSize.height * 0.4f);
-	addChild(gp4);
+	addChild(gp4);*/
 
 	soundOn = Sprite::createWithSpriteFrameName("btn-sound-on.png");
 	soundOff = Sprite::createWithSpriteFrameName("btn-sound-off.png");
 
-	soundOn->setPosition(visibleSize.width * 9 / 10, visibleSize.height / 10);
-	soundOff->setPosition(visibleSize.width * 9 / 10, visibleSize.height / 10);
+	soundOn->setPosition(visibleSize.width * 0.85f, visibleSize.height / 10);
+	soundOff->setPosition(visibleSize.width * 0.85f, visibleSize.height / 10);
 
 	this->addChild(soundOn);
 	this->addChild(soundOff);
-	float scaleOfSound = (visibleSize.height / 13) / soundOn->getContentSize().height;
+	float scaleOfSound = (visibleSize.height / 11) / soundOn->getContentSize().height;
 	soundOn->setScale(scaleOfSound);
 	soundOff->setScale(scaleOfSound);
 
-	bool checkSound = ref->getBoolForKey(KEYSOUND, true); 
+	bool checkSound = ref->getBoolForKey(KEYSOUND, true);
 	if (checkSound) {
 		soundOff->setVisible(false);
 		backgroudSoundID = experimental::AudioEngine::play2d(SOUND_BACKGROUND, true);
+		if (ref->getIntegerForKey(KEY_ID_BG_MUSIC) == NULL) {
+			ref->setIntegerForKey(KEY_ID_BG_MUSIC, backgroudSoundID);
+		}
 	}
 	else {
 		soundOn->setVisible(false);
@@ -178,8 +171,50 @@ bool StartScene::init()
 	auto listener = EventListenerTouchOneByOne::create();
 	listener->onTouchBegan = CC_CALLBACK_2(StartScene::onTouchBegan, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
-
 	return true;
+}
+
+void StartScene::createAction()
+{
+	action_1 = RepeatForever::create(Sequence::create(Spawn::create(Sequence::create(ScaleTo::create(0.75, 1.2), ScaleTo::create(0.75, 0.1), nullptr),
+		Sequence::create(MoveTo::create(0.75, Vec2(Director::getInstance()->getVisibleSize().width * 1 / 4, Director::getInstance()->getVisibleSize().height / 5)),
+			MoveTo::create(0.75, Vec2(Director::getInstance()->getVisibleSize().width * 1 / 8, Director::getInstance()->getVisibleSize().height / 6.0f)), nullptr), nullptr),
+		CallFunc::create([&]() {
+		grass1->setPosition(Director::getInstance()->getVisibleSize().width * 3 / 8,
+			Director::getInstance()->getVisibleSize().height / 4.9f);
+	}), nullptr));
+
+	action_2 = RepeatForever::create(Sequence::create(Spawn::create(Sequence::create(ScaleTo::create(1, 1.2), ScaleTo::create(1, 0.1), nullptr),
+		Sequence::create(MoveTo::create(1, Vec2(Director::getInstance()->getVisibleSize().width * 6 / 8, Director::getInstance()->getVisibleSize().height / 5)),
+			MoveTo::create(1, Vec2(Director::getInstance()->getVisibleSize().width * 5 / 8, Director::getInstance()->getVisibleSize().height / 4.71f)), nullptr), nullptr),
+		CallFunc::create([&]() {
+		grass2->setPosition(Director::getInstance()->getVisibleSize().width * 7 / 8,
+			Director::getInstance()->getVisibleSize().height / 5.32f);
+	}), nullptr));
+
+	action_3 = RepeatForever::create(Sequence::create(DelayTime::create(0.5), Spawn::create(Sequence::create(ScaleTo::create(0.75, 1.2), ScaleTo::create(0.75, 0.1), nullptr),
+		Sequence::create(MoveTo::create(0.75, Vec2(Director::getInstance()->getVisibleSize().width * 7 / 9, Director::getInstance()->getVisibleSize().height / 5)),
+			MoveTo::create(0.75, Vec2(Director::getInstance()->getVisibleSize().width * 6 / 9, Director::getInstance()->getVisibleSize().height / 4.4f)), nullptr), nullptr),
+		CallFunc::create([&]() {
+		grass3->setPosition(Director::getInstance()->getVisibleSize().width * 8 / 9,
+			Director::getInstance()->getVisibleSize().height / 5.45f);
+	}), nullptr));
+
+}
+
+void StartScene::onEnter()
+{
+	Node::onEnter();
+	createAction();
+	grass1->runAction(action_1);
+	grass2->runAction(action_2);
+	grass3->runAction(action_3);
+#ifdef SDKBOX_ENABLED
+	if (sdkbox::PluginAdMob::isAvailable("home")) {
+		sdkbox::PluginAdMob::show("home");
+	}
+#endif
+
 }
 
 bool StartScene::onTouchBegan(Touch * touch, Event * unused_event)
@@ -189,46 +224,50 @@ bool StartScene::onTouchBegan(Touch * touch, Event * unused_event)
 		Director::getInstance()->replaceScene(scene);
 	}
 
-	if (setting->getBoundingBox().containsPoint(touch->getLocation())) {
+	else if (setting->getBoundingBox().containsPoint(touch->getLocation())) {
+		//grass1->stopAllActions(); grass2->stopAllActions(); grass3->stopAllActions();
+		if (ref->getIntegerForKey(KEYGUIDE) != 1) {
+			ref->setIntegerForKey(KEYGUIDE, 1); ref->flush();
+		}
 		Director::getInstance()->replaceScene(ControlSettingScene::createScene());
 	}
 
-	if (gp1->getBoundingBox().containsPoint(touch->getLocation())) {
+	/*else if (gp1->getBoundingBox().containsPoint(touch->getLocation())) {
 		ref->setIntegerForKey(KEY_CHOICE, 1); ref->flush();
 		auto scene = GameScene::createScene();
 		Director::getInstance()->replaceScene(scene);
 	}
 
-	if (gp2->getBoundingBox().containsPoint(touch->getLocation())) {
+	else if (gp2->getBoundingBox().containsPoint(touch->getLocation())) {
 		ref->setIntegerForKey(KEY_CHOICE, 9); ref->flush();
 		auto scene = GameScene::createScene();
 		Director::getInstance()->replaceScene(scene);
 	}
 
-	if (gp3->getBoundingBox().containsPoint(touch->getLocation())) {
+	else if (gp3->getBoundingBox().containsPoint(touch->getLocation())) {
 		ref->setIntegerForKey(KEY_CHOICE, 12); ref->flush();
 		auto scene = GameScene::createScene();
 		Director::getInstance()->replaceScene(scene);
 	}
 
-	if (gp4->getBoundingBox().containsPoint(touch->getLocation())) {
+	else if (gp4->getBoundingBox().containsPoint(touch->getLocation())) {
 		ref->setIntegerForKey(KEY_CHOICE, 15); ref->flush();
 		auto scene = GameScene::createScene();
 		Director::getInstance()->replaceScene(scene);
-	}
+	}*/
 
-	if (soundOn->getBoundingBox().containsPoint(touch->getLocation())) {
+	else if (soundOn->getBoundingBox().containsPoint(touch->getLocation())) {
 		//if (soundOn->isVisible()) {
 		if (ref->getBoolForKey(KEYSOUND, true)) {
 			soundOn->setVisible(false);
 			soundOff->setVisible(true);
-			ref->setBoolForKey(KEYSOUND, false);
+			ref->setBoolForKey(KEYSOUND, false); ref->flush();
 			experimental::AudioEngine::stop(backgroudSoundID);
 		}
 		else {
 			soundOff->setVisible(false);
 			soundOn->setVisible(true);
-			ref->setBoolForKey(KEYSOUND, true);
+			ref->setBoolForKey(KEYSOUND, true); ref->flush();
 			backgroudSoundID = experimental::AudioEngine::play2d(SOUND_BACKGROUND, true);
 		}
 	}

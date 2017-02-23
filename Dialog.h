@@ -12,7 +12,11 @@ class Dialog : public Layer
 {
 public:
 
+	float scaleOfRetry;
 	virtual bool init();
+
+	bool isLoseTheGame;
+	static Dialog* create(bool isLoseTheGame);
 
 	Sprite* background;
 	Sprite* goSettingBtn;
@@ -23,7 +27,7 @@ public:
 	// listener
 	bool onTouchBegan(Touch *touch, Event *event);
 
-	CREATE_FUNC(Dialog);
+	//CREATE_FUNC(Dialog);
 };
 
 #endif // __DIALOG_H__

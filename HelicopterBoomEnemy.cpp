@@ -3,6 +3,8 @@
 
 HelicopterBoomEnemy::HelicopterBoomEnemy(string jsonFile, string atlasFile, float scale) : StaticHumanEnemy(jsonFile, atlasFile, scale)
 {
+	checkCanShoot = 39;
+	periodShoot = 40;
 }
 
 HelicopterBoomEnemy * HelicopterBoomEnemy::create(float scale, HelicopterBoomType type)
@@ -22,6 +24,7 @@ HelicopterBoomEnemy * HelicopterBoomEnemy::create(float scale, HelicopterBoomTyp
 	//e->setTag(TAG_ENEMY);
 	//e->setVisible(0);
 	e->indexBullet = -1;
+	//e->periodShoot = 40;
 	return e;
 
 }
@@ -37,11 +40,11 @@ void HelicopterBoomEnemy::move(Point posOfSoldier)
 			if (this->checkCanShoot == 60) {
 				auto vec = posOfSoldier - (this->getPosition() + this->getParent()->getPosition());
 				if (vec.x <= 0) {
-					move_vel = -SCREEN_SIZE.width / 5 / PTM_RATIO;
+					move_vel = -SCREEN_SIZE.width / 10 / PTM_RATIO;
 					//this->body->SetLinearVelocity(b2Vec2(-SCREEN_SIZE.width / 5 / PTM_RATIO, this->body->GetLinearVelocity().y));
 				}
 				else {
-					move_vel = SCREEN_SIZE.width / 5 / PTM_RATIO;
+					move_vel = SCREEN_SIZE.width / 10 / PTM_RATIO;
 					//this->body->SetLinearVelocity(b2Vec2(SCREEN_SIZE.width / 5 / PTM_RATIO, this->body->GetLinearVelocity().y));
 				}
 				this->body->SetLinearVelocity(b2Vec2(move_vel, this->body->GetLinearVelocity().y));
@@ -58,7 +61,7 @@ void HelicopterBoomEnemy::shoot(Point posOfHero)
 	if (checkSound) {
 		experimental::AudioEngine::play2d(SOUND_HELICOPTER);
 	}*/
-	AudioManager::playSound(SOUND_HELICOPTER);
+	AudioManager::playSound(SOUND_ENEMY_BOMB);
 	posOfHero = posOfHero - this->getParent()->getPosition();
 	auto bullet = (BombOfEnemy*)bulletPool->getObjectAtIndex(indexBullet);
 	bullet->isDie = false;
@@ -92,7 +95,8 @@ void HelicopterBoomEnemy::die()
 		//removeFromParentAndCleanup(true);
 	});
 
-	this->runAction((Sequence::create(DelayTime::create(0.5f), callFunc, nullptr)));
+	//this->runAction((Sequence::create(DelayTime::create(0.5f), callFunc, nullptr)));
+	this->runAction(Spawn::createWithTwoActions(Sequence::create(DelayTime::create(0.5f), callFunc, nullptr), Spawn::create(ScaleTo::create(0.5f, 0), RotateBy::create(0.5f, 720), MoveBy::create(0.5f, Vec2(-SCREEN_SIZE.width / 8, -SCREEN_SIZE.height / 8)), nullptr)));
 }
 
 void HelicopterBoomEnemy::updateEnemy(float dt, Point cameraPoint, Point posOfHero)

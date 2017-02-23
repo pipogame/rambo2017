@@ -21,8 +21,8 @@ using namespace std;
 #define KEYBTNJUMP_Y					"KEYJUMPY"
 #define KEY_CHOICE						"GAMEPLAY"
 #define KEY_HEALTH						"KEYHEALTH"
-#define KEYONGAME						"KEYONGAME"
-#define KEYADS							"KEYADS"
+#define KEY_ID_BG_MUSIC					"KEYMUSIC"
+#define KEYGUIDE						"KEYGUIDE"
 #define KEYSOUND						"KEYSOUND"
 
 
@@ -47,6 +47,7 @@ using namespace std;
 #define TAG_BLINK							56
 #define TAG_BOMB_ENEMY						57
 #define TAG_GAME							58
+#define TAG_DIALOG							59
 
 
 #define TAG_ENEMY_SOLDIER					101
@@ -59,8 +60,6 @@ using namespace std;
 #define TAG_ENEMY_HELICOPTER_BOOM			108
 
 
-
-
 // z-order
 #define ZORDER_BG_1						0
 #define ZORDER_BG_2						1
@@ -69,17 +68,6 @@ using namespace std;
 #define ZORDER_ENEMY					6
 #define ZORDER_SOLDIER					7
 #define ZORDER_ITEM						11
-
-
-
-// define scale ratio
-#define ALLIGATOR_RATIO_ORIGIN			2.65f
-#define ALLIGATOR_RATIO					3.65f
-#define HIPPO_RATIO						3.0f
-#define FROG_RATIO						9.0f
-#define VORTEX_RATIO					7.0f
-#define LEAF_RATIO_ORIGIN				8.5f
-#define LOG_RATIO						4.5f
 
 
 #define PTM_RATIO							32
@@ -93,9 +81,6 @@ using namespace std;
 #define MAX_BULLET_FORT_POOL				6
 #define MAX_BULLET_TANK_POOL				3
 #define MAX_BULLET_HELICOPTER_POOL			2
-
-#define Z_BACKGROUND						0
-#define Z_HERO								1
 
 #define	SOUND_BACKGROUND					"sound/theme_music.mp3"
 #define SOUND_BULLET_NORMAL					"sound/normal bullet.mp3"

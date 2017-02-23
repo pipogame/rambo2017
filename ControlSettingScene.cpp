@@ -2,6 +2,11 @@
 #include "StartScene.h"
 #include "AudioEngine.h"
 
+#ifdef SDKBOX_ENABLED
+#include "PluginGoogleAnalytics/PluginGoogleAnalytics.h"
+#include "PluginAdMob/PluginAdMob.h"
+#endif
+
 Scene* ControlSettingScene::createScene()
 {
 
@@ -28,6 +33,11 @@ bool ControlSettingScene::init()
 		return false;
 	}
 
+#ifdef SDKBOX_ENABLED
+	sdkbox::PluginGoogleAnalytics::logScreen("Setting Scene");
+	//sdkbox::PluginGoogleAnalytics::dispatchHits();
+#endif
+
 	setKeyboardEnabled(true);
 
 	auto visibleSize = Director::getInstance()->getVisibleSize();
@@ -40,11 +50,19 @@ bool ControlSettingScene::init()
 	addChild(bg);
 
 	auto label = Label::createWithTTF("Control Setting", "fonts/Roboto_Light.ttf", 200);
-	label->setScale(visibleSize.height / 14.0f / label->getBoundingBox().size.height);
+	label->setScale(visibleSize.height / 8.0f / label->getBoundingBox().size.height);
 	label->setColor(Color3B::WHITE);
 	label->enableBold();
-	label->setPosition(origin.x + visibleSize.width / 2, origin.y + visibleSize.height * 0.83f);
+	label->setPosition(origin.x + visibleSize.width / 2, origin.y + visibleSize.height * 0.8f);
 	addChild(label);
+
+
+	auto des = Label::createWithTTF("Hold and move joystick or button to new position", "fonts/Roboto_Light.ttf", 200);
+	des->setScale(visibleSize.height / 16.0f / des->getBoundingBox().size.height);
+	des->setColor(Color3B::WHITE);
+	des->enableBold();
+	des->setPosition(origin.x + visibleSize.width / 2, origin.y + visibleSize.height * 0.7f);
+	addChild(des);
 
 	reference = UserDefault::getInstance()->sharedUserDefault();
 
@@ -82,10 +100,15 @@ bool ControlSettingScene::init()
 	addChild(btnFire, 1);
 
 	submit = Sprite::create("send/ok-button.png");
-	submit->setScale(visibleSize.width / 4.0f / submit->getBoundingBox().size.width);
-	submit->setPosition(origin.x + visibleSize.width / 2, origin.y + visibleSize.height / 2);
+	submit->setScale(visibleSize.width / 8.0f / submit->getBoundingBox().size.width);
+	submit->setPosition(origin.x + visibleSize.width * 0.5f, origin.y + visibleSize.height * 0.5f);
 	addChild(submit);
 
+#ifdef SDKBOX_ENABLED
+	if (sdkbox::PluginAdMob::isAvailable("home")) {
+		sdkbox::PluginAdMob::show("home");
+	}
+#endif
 
 	auto listener = EventListenerTouchOneByOne::create();
 	listener->onTouchBegan = CC_CALLBACK_2(ControlSettingScene::onTouchBegan, this);
@@ -118,8 +141,11 @@ bool ControlSettingScene::onTouchBegan(Touch * touch, Event * unused_event)
 		reference->setFloatForKey(KEYBTNFIRE_X, btnFire->getPositionX()); reference->flush();
 		reference->setFloatForKey(KEYBTNFIRE_Y, btnFire->getPositionY()); reference->flush();
 
-
-		Director::getInstance()->replaceScene(TransitionFade::create(0.67f, GameScene::createScene()));
+		if (reference->getIntegerForKey(KEYGUIDE) == 1) {
+			Director::getInstance()->replaceScene(GameScene::createScene());
+			
+		} else
+			Director::getInstance()->popScene();
 	}
 
 	return false;
@@ -146,6 +172,17 @@ void ControlSettingScene::onKeyReleased(EventKeyboard::KeyCode keyCode, Event * 
 	if (keyCode == EventKeyboard::KeyCode::KEY_ESCAPE) {
 		Director::getInstance()->replaceScene(StartScene::createScene());
 	}
+}
+
+void ControlSettingScene::onExit()
+{
+	Node::onExit();
+#ifdef SDKBOX_ENABLED
+	if (sdkbox::PluginAdMob::isAvailable("home")) {
+		sdkbox::PluginAdMob::hide("home");
+	}
+#endif
+
 }
 
 //void ControlSettingScene::onTouchEnded(Touch * touch, Event * unused_event)

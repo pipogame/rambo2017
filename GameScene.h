@@ -3,7 +3,7 @@
 
 
 #include "Hud.h"
-#include "GLES-Render.h"
+//#include "GLES-Render.h"
 #include "Soldier.h"
 #include "TankSoldier.h"
 #include "HelicopterSoldier.h"
@@ -28,9 +28,9 @@ public:
 
     virtual bool init();
 
-	GLESDebugDraw *debugDraw;
-	Mat4 _modelViewMV;
-	CustomCommand _customCommand;
+	//GLESDebugDraw *debugDraw;
+	//Mat4 _modelViewMV;
+	//CustomCommand _customCommand;
 	const Size SCREEN_SIZE = Director::getInstance()->getVisibleSize();
 
 	b2World *world;
@@ -54,18 +54,18 @@ public:
 
 	set<int> listIndexExist;
 	vector<BulletOfHero *> existedBullet;
-	//vector<Item*> items;
 
-	//bool isTouchScreen = false;
+	bool isDoneGame = false;
+	bool isChangeControl = false;
+	int timeOut;
+	Sprite *blood_bg;
+	Sprite *logo;
 
 public:
 	// main loop in game
 	void update(float dt);
 	void updateSoldier(float dt);
 	void updateStandMan(float dt);
-	/*void updateAutoGun(float dt);
-	void updateMiniFort(float dt);
-	void updateFort(float dt);*/
 
 	void removeOlderSoldier();
 	void transformTank(Point pos);
@@ -98,8 +98,6 @@ public:
 
 	// process enemy for game
 	void createPool();
-	//void genEnemy();			// call in schedule
-	//void checkGenEnemy();		// call in update
 	
 	void genDEnemy();
 	void checkGenDEnemy();
@@ -109,16 +107,21 @@ public:
 	void controlSneakyJoystick();
 	void controlSneakyButtonJump();
 	void controlSneakyButtonFire();
+	void controlSneakyButtonPause();
 
 	//void controlButtonMove();
 
 	//void identifyAngle(Point location);
 
-	virtual void draw(Renderer *renderer, const Mat4 &transform, uint32_t flags) override;
-	void onDraw();
+	//virtual void draw(Renderer *renderer, const Mat4 &transform, uint32_t flags) override;
+	//void onDraw();
+
+	void changeControl();
+	void finalSection(bool isWin);
 
 	void resumeGame();
-	void pauseGame();
+	void pauseGame(bool isLoseTheGame);
+	void retryGame();
 
 	//bool onTouchBegan(Touch *touch, Event *unused_event);
 	//void onTouchMoved(Touch *touch, Event *unused_event);

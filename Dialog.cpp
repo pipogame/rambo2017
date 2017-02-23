@@ -1,7 +1,13 @@
 #include "Dialog.h"
 #include "GameScene.h"
 #include "StartScene.h"
+#include "ControlSettingScene.h"
 #include "SimpleAudioEngine.h"
+
+#ifdef SDKBOX_ENABLED
+#include "PluginGoogleAnalytics/PluginGoogleAnalytics.h"
+#include "PluginAdMob/PluginAdMob.h"
+#endif
 
 bool Dialog::init()
 {
@@ -12,54 +18,134 @@ bool Dialog::init()
 		return false;
 	}
 
-	this->setVisible(false);
+	//this->setVisible(false);
 
 	auto blurLayer = LayerColor::create(Color4B(0, 0, 0, 170));
 	addChild(blurLayer);
 
 	// SCREEN_SIZE
+	auto origin = Director::getInstance()->getVisibleOrigin();
 	auto win_size = Director::getInstance()->getVisibleSize();
 
-	background = Sprite::create("dialog.png");
-	background->setScale(win_size.width / 2 / background->getContentSize().width);
-	background->setPosition(win_size / 2);
-	addChild(background);
+//	if (!isLoseTheGame) {
+		background = Sprite::create("send/dialog.png");
+		background->setScale(win_size.width / 2 / background->getContentSize().width);
+		background->setPosition(origin + win_size / 2);
+		addChild(background);
 
 
-	resumeGameBtn = Sprite::create("cancel.png");
-	resumeGameBtn->setAnchorPoint(Vec2::ZERO);
-	resumeGameBtn->setScale(win_size.height / 10 / resumeGameBtn->getContentSize().height);
-	resumeGameBtn->setPosition(win_size.width * 0.3f, win_size.height * 0.12f);
-	addChild(resumeGameBtn);
+		goSettingBtn = Sprite::create("send/btn-setting.png");
+		goSettingBtn->setAnchorPoint(Vec2::ZERO);
+		goSettingBtn->setScale(win_size.height / 7 / goSettingBtn->getContentSize().height);
+		goSettingBtn->setPosition(origin.x + win_size.width * 0.3f, origin.y + win_size.height * 0.4f);
+		addChild(goSettingBtn);
 
 
-	exitGameBtn = Sprite::create("ok.png");
-	exitGameBtn->setAnchorPoint(Vec2::ZERO);
-	exitGameBtn->setScale(win_size.height / 10 / exitGameBtn->getContentSize().height);
-	exitGameBtn->setPosition(win_size.width * 0.56f, win_size.height * 0.12f);
-	addChild(exitGameBtn);
-	
+		resumeGameBtn = Sprite::create("send/play-button.png");
+		resumeGameBtn->setAnchorPoint(Vec2(0.5f, 0));
+		resumeGameBtn->setScale(win_size.height / 7 / resumeGameBtn->getContentSize().height);
+		resumeGameBtn->setPosition(origin.x + win_size.width * 0.5f, origin.y + win_size.height * 0.4f);
+		addChild(resumeGameBtn);
+
+
+		exitGameBtn = Sprite::create("send/cancel-button.png");
+		exitGameBtn->setAnchorPoint(Vec2::ZERO);
+		exitGameBtn->setScale(win_size.height / 7 / exitGameBtn->getContentSize().height);
+		exitGameBtn->setPosition(origin.x + win_size.width * 0.7f - exitGameBtn->getBoundingBox().size.width,
+			origin.y + win_size.height * 0.4f);
+		addChild(exitGameBtn);
+//	}
+	/*else {
+		background = Sprite::create("send/retry.png");
+		background->setScale(win_size.width / 3 / background->getContentSize().width);
+		background->setPosition(origin + win_size / 2);
+		addChild(background);
+
+
+		resumeGameBtn = Sprite::create("send/retry-button.png");
+		resumeGameBtn->setScale(win_size.height / 7 / resumeGameBtn->getContentSize().height);
+		resumeGameBtn->setPosition(origin.x + win_size.width * 0.43f, origin.y + win_size.height * 0.45f);
+		scaleOfRetry = resumeGameBtn->getScale();
+		addChild(resumeGameBtn);
+
+
+		exitGameBtn = Sprite::create("send/cancel-button.png");
+		exitGameBtn->setScale(win_size.height / 7 / exitGameBtn->getContentSize().height);
+		exitGameBtn->setPosition(origin.x + win_size.width * 0.57f, origin.y + win_size.height * 0.45f);
+		addChild(exitGameBtn);
+	}*/
+
+
+
 	return true;
+}
+
+Dialog* Dialog::create(bool isLoseTheGame)
+{
+	Dialog* dialog = new Dialog();
+	//dialog->isLoseTheGame = isLoseTheGame;
+	if (dialog && dialog->init())
+	{
+		dialog->autorelease();
+		return dialog;
+	}
+	else
+	{
+		delete dialog;
+		dialog = nullptr;
+		return nullptr;
+	}
 }
 
 
 bool Dialog::onTouchBegan(Touch * touch, Event * event)
 {
 	if (exitGameBtn->getBoundingBox().containsPoint(touch->getLocation())) {
-		//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sound/sound-button.mp3");
+#ifdef SDKBOX_ENABLED
+		if (sdkbox::PluginAdMob::isAvailable("gameover")) {
+			sdkbox::PluginAdMob::show("gameover");
+		}
+#endif
 		Director::getInstance()->replaceScene(StartScene::createScene());
+
 	}
 
 	if (resumeGameBtn->getBoundingBox().containsPoint(touch->getLocation())) {
-		//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sound/sound-button.mp3");
-		Director::getInstance()->getEventDispatcher()->removeEventListener(_listener);
-		this->setVisible(false);
+		
 		GameScene* gameScene = (GameScene*) this->getParent()->getChildByTag(TAG_GAME);
-		if (UserDefault::getInstance()->sharedUserDefault()->getBoolForKey(KEYSOUND)) {
-			experimental::AudioEngine::resumeAll();
-		}
 
-		gameScene->resumeGame();
+		//if (!isLoseTheGame) {
+			Director::getInstance()->getEventDispatcher()->removeEventListener(_listener);
+			gameScene->resumeGame();
+			
+		//}		
+		//else {
+			//#ifdef SDKBOX_ENABLED
+			//			if (sdkbox::PluginAdMob::isAvailable("gameover")) {
+			//				Director::getInstance()->getEventDispatcher()->removeEventListener(_listener);
+			//				gameScene->retryGame();
+			//				sdkbox::PluginAdMob::show("gameover");
+			//			}
+			//			else {
+			//				resumeGameBtn->runAction(Sequence::create(ScaleTo::create(0.4f, scaleOfRetry*1.3), ScaleTo::create(0.4f, scaleOfRetry), nullptr));
+			//			}
+			//#endif
+			//		}
+
+
+		//}
+
+		// 1 or 2 health
+	}
+
+	else if (/*!isLoseTheGame &&*/ goSettingBtn->getBoundingBox().containsPoint(touch->getLocation())) {
+		GameScene* gameScene = (GameScene*) this->getParent()->getChildByTag(TAG_GAME);
+		gameScene->isChangeControl = true;
+
+		Director::getInstance()->getEventDispatcher()->removeEventListener(_listener);
+		this->removeFromParentAndCleanup(true);
+
+		Director::getInstance()->pushScene(ControlSettingScene::createScene());
 	}
 
 	return false;

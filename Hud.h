@@ -18,12 +18,9 @@ public:
 	SneakyJoystick *joystick;
 	SneakyButton *btnJump;
 	SneakyButton *btnFire;
+	SneakyButton *btnPause;
 
-	Sprite *life_1;
-	Sprite *life_2;
-	Sprite *life_3;
-	Sprite *life_4;
-	Sprite *life_5;
+	Sprite** menuLife;
 
 	Sprite *shield;
 	Label* defense;
@@ -34,6 +31,7 @@ public:
 	void addJoystick(float px, float py);
 	void addJoystickButtonJump(float px, float py);
 	void addJoystickButtonFire(float px, float py);
+	void addJoystickButtonPause();
 
 	//void addButton();
 

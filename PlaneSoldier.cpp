@@ -89,7 +89,7 @@ void PlaneSoldier::idleShoot()
 
 		pre_state = IDLE_SHOOT;
 	}
-	
+
 }
 
 void PlaneSoldier::createBombPool()
@@ -131,7 +131,6 @@ void PlaneSoldier::shoot(float radian)
 				createBullet(radian, getGunLoc("bshoot"));
 				createBullet(radian, getGunLoc("fshoot"));
 			}
-
 			canShoot = 1;
 		}
 	}
@@ -140,7 +139,7 @@ void PlaneSoldier::shoot(float radian)
 void PlaneSoldier::dropLittleBoy()
 {
 	canDrop++;
-	if (canDrop >= 120 && bombPool != nullptr) {
+	if (canDrop >= 80 && bombPool != nullptr) {
 		createBomb();
 		canDrop = 0;
 	}

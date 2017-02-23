@@ -25,7 +25,7 @@ void B2Sprite::initPhysic(b2World *world, Point pos, b2BodyType type)
 	auto size = this->getBoundingBox().size;
 	shape.SetAsBox(size.width / 2 / PTM_RATIO, 0 / PTM_RATIO);
 
-	fixtureDef.density = 0.5f;
+	fixtureDef.density = 10.0f;
 	fixtureDef.friction = 1.0f;
 	fixtureDef.restitution = 0.0f;
 	fixtureDef.shape = &shape;
@@ -54,43 +54,45 @@ void B2Sprite::explosion()
 	//va tao hai vu no nhung chi giai phong duoc 1
 
 	if (!boom) {
-		/*auto ref = UserDefault::getInstance()->sharedUserDefault();
-		bool checkSound = ref->getBoolForKey(KEYSOUND);
-		if (checkSound) {
-			experimental::AudioEngine::play2d(SOUND_ENEMY_BOMB_EXPLOSION);
-		}*/
-		AudioManager::playSound(SOUND_ENEMY_BOMB_EXPLOSION);  
+		if (this->getParent() != nullptr) {
+			/*auto ref = UserDefault::getInstance()->sharedUserDefault();
+			bool checkSound = ref->getBoolForKey(KEYSOUND);
+			if (checkSound) {
+				experimental::AudioEngine::play2d(SOUND_ENEMY_BOMB_EXPLOSION);
+			}*/
+			AudioManager::playSound(SOUND_ENEMY_BOMB_EXPLOSION);
 
-		boom = Sprite::createWithSpriteFrameName("explosion-1.png");
-		boom->setScale(SCREEN_SIZE.height / 6.0f / boom->getContentSize().height);
-		//boom->setPosition(0, this->getBoundingBox().size.height / 2);
-		//log("Boom-----------------------");
-		boom->setPosition(this->getPosition());
-		this->getParent()->addChild(boom, 100);
-		Vector<SpriteFrame*> animFrames;
-		animFrames.reserve(7);
+			boom = Sprite::createWithSpriteFrameName("explosion-1.png");
+			boom->setScale(SCREEN_SIZE.height / 6.0f / boom->getContentSize().height);
+			//boom->setPosition(0, this->getBoundingBox().size.height / 2);
+			//log("Boom-----------------------");
+			boom->setPosition(this->getPosition());
+			this->getParent()->addChild(boom, 100);
+			Vector<SpriteFrame*> animFrames;
+			animFrames.reserve(7);
 
-		for (int i = 2; i < 8; i++)
-		{
-			auto frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(StringUtils::format("explosion-%d.png", i));
-			animFrames.pushBack(frame);
-		}
-
-		auto animation = Animation::createWithSpriteFrames(animFrames, 0.075f);
-		auto animate = Animate::create(animation);
-		animate->retain();
-		boom->runAction(animate);
-
-		auto callFunc2 = CallFunc::create([&]() {
-			if (boom != nullptr) {
-				boom->removeFromParentAndCleanup(true);
-				//boom->release();
-				boom = nullptr;
-				//log("destroy Boom-----------------------");
+			for (int i = 2; i < 8; i++)
+			{
+				auto frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(StringUtils::format("explosion-%d.png", i));
+				animFrames.pushBack(frame);
 			}
-		});
-		//this->runAction(Sequence::create(DelayTime::create(0.5f), callFunc2, nullptr));
-		boom->runAction(Sequence::create(animate, callFunc2, nullptr));
+
+			auto animation = Animation::createWithSpriteFrames(animFrames, 0.075f);
+			auto animate = Animate::create(animation);
+			animate->retain();
+			boom->runAction(animate);
+
+			auto callFunc2 = CallFunc::create([&]() {
+				if (boom != nullptr) {
+					boom->removeFromParentAndCleanup(true);
+					//boom->release();
+					boom = nullptr;
+					//log("destroy Boom-----------------------");
+				}
+			});
+			//this->runAction(Sequence::create(DelayTime::create(0.5f), callFunc2, nullptr));
+			boom->runAction(Sequence::create(animate, callFunc2, nullptr));
+		}
 	}
 
 
